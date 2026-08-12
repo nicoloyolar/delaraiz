@@ -1,0 +1,70 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /bandas_postulaciones/{bandaId} {
+
+      // Cualquier persona puede postular (formulario público) — pero solo
+      // puede crear, nunca leer ni modificar postulaciones ajenas. Debe
+      // venir asociada a un proyecto (el que el admin marcó como abierto
+      // a postulaciones; ver ProyectoService.streamProyectoConPostulacionesAbiertas).
+      allow create: if
+        request.resource.data.nombreGrupo is string &&
+        request.resource.data.nombreGrupo.size() > 0 &&
+        request.resource.data.correoContacto is string &&
+        request.resource.data.proyectoId is string &&
+        request.resource.data.proyectoId.size() > 0 &&
+        request.resource.data.estado == 'pendiente';
+
+      // Leer, actualizar estado o eliminar solo lo puede hacer la
+      // directiva autenticada desde el Dashboard.
+      allow read, update, delete: if request.auth != null;
+    }
+
+    match /documentos_institucionales/{documentoId} {
+      // Documentación interna de la Corporación (estatutos, actas,
+      // contratos, informes): a diferencia de las postulaciones, aquí no
+      // hay escritura pública — solo la directiva autenticada puede leer,
+      // crear, actualizar o eliminar.
+      allow read, create, update, delete: if request.auth != null;
+    }
+
+    // --- Proyectos y sus subcolecciones ---
+    // La entidad central de la plataforma: uso exclusivamente interno.
+    // Hoy todo usuario autenticado es admin (un solo nivel de acceso); la
+    // fase de roles granulares reemplazará esta condición sin tener que
+    // migrar el modelo de datos.
+    match /proyectos/{proyectoId} {
+      allow read, create, update, delete: if request.auth != null;
+
+      match /{subcoleccion}/{docId} {
+        allow read, create, update, delete: if request.auth != null;
+      }
+    }
+
+    // --- Espacios recuperados ---
+    match /espacios/{espacioId} {
+      allow read, create, update, delete: if request.auth != null;
+    }
+
+    // --- Equipo y voluntarios ---
+    match /personas/{personaId} {
+      allow read, create, update, delete: if request.auth != null;
+    }
+
+    // --- Perfiles de acceso al sistema (base para roles futuros) ---
+    match /usuarios/{uid} {
+      allow read, create, update, delete: if request.auth != null;
+    }
+
+    // --- Fondos y financiamiento ---
+    match /postulaciones_fondos/{postulacionId} {
+      allow read, create, update, delete: if request.auth != null;
+
+      match /rendiciones/{rendicionId} {
+        allow read, create, update, delete: if request.auth != null;
+      }
+    }
+  }
+}
