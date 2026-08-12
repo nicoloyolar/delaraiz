@@ -49,3 +49,8 @@ web/vendor/
 web/node_modules/
 web/*.env
 web/config/local.php
+
+# Backups locales del runbook de despliegue (functions.php.bak-20260812-...,
+# etc.) — nunca son código fuente, se generan solos antes de cada
+# sobrescritura en producción/servidor. Ver PROYECTO.md del sitio.
+web/**/*.bak-*

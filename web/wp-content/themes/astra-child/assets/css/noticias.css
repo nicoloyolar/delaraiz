@@ -1,0 +1,177 @@
+/*
+ * Página Noticias (home.php) — mismos tokens/helpers de header.css/premium.css
+ * (.cdlr-container, .cdlr-eyebrow, .cdlr-section-title, [data-reveal],
+ * .cdlr-btn, .cdlr-hero__lead). Acá solo lo específico de esta página: hero
+ * sin foto (mismo tratamiento que .cdlr-mem-hero de Membresía) y la grilla de
+ * tarjetas de entradas.
+ */
+
+/* Hero */
+.cdlr-noticias-hero {
+	background: var(--cdlr-ink);
+	background-image: radial-gradient(120% 100% at 15% 0%, rgba(255, 69, 0, 0.22), transparent 60%);
+	color: #fff;
+	padding-block: clamp(6.5rem, 16vh, 9rem) clamp(3.5rem, 7vh, 5rem);
+}
+.cdlr-noticias-hero__title {
+	font-family: var(--font-display);
+	font-weight: 700;
+	font-size: var(--fs-h1);
+	line-height: 1.05;
+	text-transform: uppercase;
+	margin: 0 0 1.25rem;
+	color: #fff;
+}
+
+/* Listado */
+.cdlr-noticias-list {
+	background: #fff;
+	color: var(--cdlr-text);
+	padding-block: clamp(4rem, 8vw, 6rem);
+}
+.cdlr-noticias__grid {
+	display: grid;
+	gap: 2rem;
+}
+@media (min-width: 48rem) {
+	.cdlr-noticias__grid {
+		grid-template-columns: repeat(2, 1fr);
+	}
+}
+@media (min-width: 72rem) {
+	.cdlr-noticias__grid {
+		grid-template-columns: repeat(3, 1fr);
+	}
+}
+
+.cdlr-noticias-card {
+	display: flex;
+	flex-direction: column;
+	background: #fff;
+	border: 1px solid var(--cdlr-line);
+	border-radius: var(--radius);
+	overflow: hidden;
+	transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.cdlr-noticias-card:hover {
+	transform: translateY(-4px);
+	box-shadow: 0 20px 40px -24px rgba(0, 0, 0, 0.25);
+}
+.cdlr-noticias-card__media {
+	display: block;
+	aspect-ratio: 16 / 10;
+	background: var(--cdlr-ink);
+	overflow: hidden;
+}
+.cdlr-noticias-card__media img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	display: block;
+}
+.cdlr-noticias-card__media-fallback {
+	width: 100%;
+	height: 100%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: var(--cdlr-accent);
+}
+.cdlr-noticias-card__media-fallback .cdlr-icon {
+	width: 2.5rem;
+	height: 2.5rem;
+}
+.cdlr-noticias-card__body {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+	padding: 1.5rem;
+	gap: 0.6rem;
+}
+.cdlr-noticias-card__date {
+	font-family: var(--font-body);
+	font-size: 0.8rem;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	color: var(--cdlr-accent-ink);
+}
+.cdlr-noticias-card__title {
+	font-family: var(--font-display);
+	font-weight: 700;
+	font-size: 1.25rem;
+	line-height: 1.25;
+	margin: 0;
+}
+.cdlr-noticias-card__title a {
+	color: var(--cdlr-text);
+	text-decoration: none;
+}
+.cdlr-noticias-card__title a:hover {
+	color: var(--cdlr-accent-ink);
+}
+.cdlr-noticias-card__excerpt {
+	font-family: var(--font-body);
+	font-size: 0.95rem;
+	line-height: 1.6;
+	color: var(--cdlr-muted);
+	margin: 0;
+	flex: 1;
+}
+.cdlr-noticias-card .cdlr-btn--link {
+	color: var(--cdlr-accent-ink);
+	align-self: flex-start;
+	margin-top: 0.25rem;
+}
+.cdlr-noticias-card .cdlr-btn--link:hover {
+	color: var(--cdlr-accent);
+}
+
+.cdlr-noticias__empty {
+	font-family: var(--font-body);
+	color: var(--cdlr-muted);
+	text-align: center;
+	padding-block: 2rem;
+}
+
+/* Paginación (the_posts_pagination, markup/clases por defecto de WP) */
+.cdlr-noticias-list .pagination {
+	margin-top: clamp(2.5rem, 5vw, 3.5rem);
+}
+.cdlr-noticias-list .nav-links {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	gap: 0.6rem;
+	flex-wrap: wrap;
+}
+.cdlr-noticias-list .page-numbers {
+	font-family: var(--font-body);
+	font-weight: 600;
+	font-size: 0.9rem;
+	min-width: 2.5rem;
+	height: 2.5rem;
+	padding-inline: 0.75rem;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 999px;
+	border: 1px solid var(--cdlr-line);
+	color: var(--cdlr-text);
+	text-decoration: none;
+	transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+.cdlr-noticias-list .page-numbers:hover {
+	background: var(--cdlr-accent);
+	border-color: var(--cdlr-accent);
+	color: #fff;
+}
+.cdlr-noticias-list .page-numbers.current {
+	background: var(--cdlr-ink);
+	border-color: var(--cdlr-ink);
+	color: #fff;
+}
+.cdlr-noticias-list .page-numbers.dots {
+	border: 0;
+	background: none;
+}

@@ -1,0 +1,114 @@
+/*
+ * Página Quiénes somos — reutiliza el hero sin foto de membresia.css
+ * (.cdlr-mem-hero) y los helpers de header.css/premium.css. Acá solo lo
+ * específico: misión/visión, tarjetas de equipo con badge de iniciales (no
+ * hay fotos reales del equipo todavía) y la nota del directorio.
+ */
+
+/* Misión / Visión */
+.cdlr-quienes-mv {
+	background: #fff;
+	color: var(--cdlr-text);
+	padding-block: clamp(4rem, 8vw, 6rem);
+}
+.cdlr-quienes-mv__grid {
+	display: grid;
+	gap: 2rem;
+}
+@media (min-width: 48rem) {
+	.cdlr-quienes-mv__grid {
+		grid-template-columns: repeat(2, 1fr);
+	}
+}
+.cdlr-quienes-mv__card {
+	background: var(--cdlr-ink);
+	border: 1px solid var(--cdlr-accent);
+	border-radius: var(--radius);
+	padding: 2rem;
+	color: #fff;
+}
+.cdlr-quienes-mv__card p {
+	font-family: var(--font-body);
+	font-size: 1rem;
+	line-height: 1.7;
+	color: var(--cdlr-body-dark);
+	margin: 0.75rem 0 0;
+}
+
+/* Equipo */
+.cdlr-quienes-equipo {
+	background: #fff;
+	color: var(--cdlr-text);
+	padding-bottom: clamp(4rem, 8vw, 6rem);
+}
+.cdlr-quienes-grid {
+	display: grid;
+	gap: 1.5rem;
+	grid-template-columns: 1fr;
+}
+@media (min-width: 40rem) {
+	.cdlr-quienes-grid {
+		grid-template-columns: repeat(2, 1fr);
+	}
+}
+@media (min-width: 64rem) {
+	.cdlr-quienes-grid {
+		grid-template-columns: repeat(3, 1fr);
+	}
+}
+.cdlr-persona {
+	background: var(--cdlr-ink);
+	border: 1px solid var(--cdlr-accent);
+	border-radius: var(--radius);
+	padding: 2rem;
+	color: #fff;
+}
+.cdlr-persona__avatar {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 3.5rem;
+	height: 3.5rem;
+	border-radius: 50%;
+	background: rgba(255, 69, 0, 0.15);
+	color: var(--cdlr-accent);
+	font-family: var(--font-display);
+	font-weight: 700;
+	font-size: 1.1rem;
+	letter-spacing: 0.02em;
+	margin-bottom: 1.25rem;
+}
+.cdlr-persona__nombre {
+	font-family: var(--font-display);
+	text-transform: uppercase;
+	font-size: 1.1rem;
+	margin: 0 0 0.3rem;
+	color: #fff;
+}
+.cdlr-persona__cargo {
+	font-family: var(--font-body);
+	font-weight: 600;
+	font-size: 0.8rem;
+	text-transform: uppercase;
+	letter-spacing: 0.03em;
+	color: var(--cdlr-accent);
+	margin: 0 0 0.9rem;
+}
+.cdlr-persona__bio {
+	font-family: var(--font-body);
+	font-size: 0.92rem;
+	line-height: 1.6;
+	color: var(--cdlr-body-dark);
+	margin: 0;
+}
+
+.cdlr-quienes-directorio {
+	font-family: var(--font-body);
+	font-size: 0.9rem;
+	color: var(--cdlr-muted);
+	text-align: center;
+	max-width: 42rem;
+	margin: clamp(2.5rem, 5vw, 3.5rem) auto 0;
+	padding-top: clamp(2rem, 4vw, 2.5rem);
+	border-top: 1px solid var(--cdlr-line);
+}

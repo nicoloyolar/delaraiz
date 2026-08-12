@@ -1,0 +1,110 @@
+/*
+ * Footer a medida, sitewide (reemplaza el footer genérico de Astra). Usa los
+ * mismos tokens de color/tipografía de header.css y el .cdlr-container
+ * compartido — no depende de premium.css, así que funciona en cualquier
+ * página, no solo en home/membresía.
+ */
+.cdlr-footer {
+	background: var(--cdlr-ink);
+	color: var(--cdlr-body-dark);
+}
+
+.cdlr-footer__grid {
+	display: grid;
+	gap: 2.5rem;
+	padding-block: clamp(3rem, 6vw, 4.5rem);
+}
+@media (min-width: 48rem) {
+	.cdlr-footer__grid {
+		grid-template-columns: 1.2fr 1fr 1fr 0.9fr;
+		gap: 2rem;
+	}
+}
+
+.cdlr-footer__logo {
+	font-family: var(--font-display);
+	font-weight: 700;
+	font-size: 1.25rem;
+	text-transform: uppercase;
+	letter-spacing: 0.02em;
+	color: #fff;
+	text-decoration: none;
+}
+.cdlr-footer__brand p {
+	font-family: var(--font-body);
+	font-size: 0.9rem;
+	line-height: 1.6;
+	color: var(--cdlr-body-dark);
+	max-width: 32ch;
+	margin: 0.9rem 0 0;
+}
+
+.cdlr-footer__heading {
+	font-family: var(--font-display);
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	font-size: 0.85rem;
+	color: #fff;
+	margin: 0 0 1.1rem;
+}
+.cdlr-footer__links {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: grid;
+	gap: 0.75rem;
+}
+.cdlr-footer__links li {
+	font-family: var(--font-body);
+	font-size: 0.9rem;
+	color: var(--cdlr-body-dark);
+}
+.cdlr-footer__links a {
+	color: inherit;
+	text-decoration: none;
+}
+.cdlr-footer__links a:hover {
+	color: var(--cdlr-accent);
+}
+
+.cdlr-footer__social {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.65rem;
+}
+.cdlr-footer__social-item {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 2.5rem;
+	height: 2.5rem;
+	border-radius: 50%;
+	background: rgba(255, 255, 255, 0.08);
+	color: #fff;
+	transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+.cdlr-footer__social-item .cdlr-icon {
+	width: 1.2rem;
+	height: 1.2rem;
+}
+a.cdlr-footer__social-item:hover {
+	background: var(--cdlr-accent);
+	color: #fff;
+	transform: translateY(-2px);
+}
+.cdlr-footer__social-item--soon {
+	color: rgba(255, 255, 255, 0.35);
+	cursor: default;
+}
+
+.cdlr-footer__bottom {
+	border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+.cdlr-footer__bottom p {
+	font-family: var(--font-body);
+	font-size: 0.8rem;
+	color: rgba(255, 255, 255, 0.5);
+	text-align: center;
+	margin: 0;
+	padding-block: 1.25rem;
+}

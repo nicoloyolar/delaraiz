@@ -1,0 +1,27 @@
+/*
+ * Tipografía de marca para el blog (single/archive de Astra) — sin esto el
+ * blog usa la tipografía por defecto de Astra, que no es Oswald/Montserrat
+ * como el resto del sitio. Sitewide y liviano: solo tipografía y color de
+ * enlace, no se toca el layout de Astra (columnas, sidebar, etc.).
+ */
+.entry-title {
+	font-family: var(--font-display);
+	font-weight: 700;
+}
+.entry-content,
+.entry-content p,
+.entry-content li {
+	font-family: var(--font-body);
+	line-height: 1.7;
+}
+.entry-content h2,
+.entry-content h3 {
+	font-family: var(--font-display);
+	text-transform: uppercase;
+}
+.entry-content a {
+	color: var(--cdlr-accent-ink);
+}
+.entry-content a:hover {
+	color: var(--cdlr-accent);
+}

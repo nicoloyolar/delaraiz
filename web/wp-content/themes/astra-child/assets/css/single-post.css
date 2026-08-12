@@ -1,0 +1,113 @@
+/*
+ * Vista de entrada individual (single.php) — mismos tokens/helpers de
+ * header.css/premium.css (.cdlr-container, .cdlr-eyebrow, [data-reveal]).
+ * La tipografía del contenido (.entry-content) ya la trae blog.css
+ * (sitewide, liviana) — acá solo el hero y el layout específico de esta
+ * plantilla, cargado solo en /noticias/<entrada>/, no en todo el sitio.
+ */
+
+/* Hero */
+.cdlr-post-hero {
+	position: relative;
+	color: #fff;
+	background: var(--cdlr-ink);
+	background-image: radial-gradient(120% 100% at 15% 0%, rgba(255, 69, 0, 0.22), transparent 60%);
+	padding-block: clamp(6.5rem, 16vh, 9rem) clamp(3rem, 6vh, 4.5rem);
+}
+.cdlr-post-hero--photo {
+	background-image: linear-gradient(180deg, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0.82) 70%, rgba(0, 0, 0, 0.92) 100%), var(--hero-image);
+	background-size: cover;
+	background-position: center;
+	padding-block: clamp(8rem, 20vh, 11rem) clamp(4rem, 8vh, 6rem);
+}
+.cdlr-post-hero__back {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4rem;
+	font-family: var(--font-body);
+	font-weight: 600;
+	font-size: 0.85rem;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	color: rgba(255, 255, 255, 0.75);
+	text-decoration: none;
+	margin-bottom: 1.5rem;
+	transition: color 0.2s ease;
+}
+.cdlr-post-hero__back:hover {
+	color: #fff;
+}
+.cdlr-post-hero__back-icon {
+	transform: rotate(180deg);
+	width: 1em;
+	height: 1em;
+}
+.cdlr-post-hero__title {
+	font-family: var(--font-display);
+	font-weight: 700;
+	font-size: clamp(1.8rem, 1.5rem + 1.8vw, 3rem);
+	line-height: 1.15;
+	text-transform: uppercase;
+	max-width: 32ch;
+	margin: 0 0 1rem;
+	color: #fff;
+}
+.cdlr-post-hero__date {
+	font-family: var(--font-body);
+	font-size: 0.9rem;
+	color: rgba(255, 255, 255, 0.65);
+	margin: 0;
+}
+
+/* Cuerpo */
+.cdlr-post-body {
+	background: #fff;
+	color: var(--cdlr-text);
+	padding-block: clamp(3rem, 6vw, 5rem);
+}
+.cdlr-post-body__inner {
+	max-width: 46rem;
+	margin-inline: auto;
+	padding-inline: clamp(1.25rem, 4vw, 3rem);
+}
+.cdlr-post-body .entry-content > *:first-child {
+	margin-top: 0;
+}
+.cdlr-post-body .entry-content img {
+	border-radius: var(--radius);
+	margin-block: 1.5rem;
+}
+
+/* Comentarios (markup/clases por defecto de Astra — solo se ajusta ancho y
+ * tipografía para que no desentonen con el resto de la plantilla). */
+.cdlr-post-comments {
+	background: #fff;
+	border-top: 1px solid var(--cdlr-line);
+	padding-block: clamp(2.5rem, 5vw, 4rem);
+}
+.cdlr-post-comments,
+.cdlr-post-comments input,
+.cdlr-post-comments textarea {
+	font-family: var(--font-body);
+}
+.cdlr-post-comments .comment-reply-title,
+.cdlr-post-comments .comments-title {
+	font-family: var(--font-display);
+	text-transform: uppercase;
+}
+.cdlr-post-comments input[type="submit"] {
+	font-family: var(--font-body);
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.02em;
+	background: var(--cdlr-accent);
+	color: #fff;
+	border: 0;
+	border-radius: 999px;
+	padding: 0.75rem 1.75rem;
+	cursor: pointer;
+	transition: background-color 0.2s ease;
+}
+.cdlr-post-comments input[type="submit"]:hover {
+	background: var(--cdlr-accent-2);
+}

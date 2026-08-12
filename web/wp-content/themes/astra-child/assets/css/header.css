@@ -1,0 +1,328 @@
+:root {
+	--cdlr-ink: #0d0d0d;
+	--cdlr-surface-dark: #243642;
+	--cdlr-accent: #ff4500;
+	--cdlr-accent-2: #df3513;
+	--cdlr-accent-ink: #b23a06;
+	--cdlr-line: #e8dfda;
+	--cdlr-text: #111111;
+	--cdlr-body-dark: #e0e0e0;
+	--cdlr-muted: #4c5a60;
+
+	--font-display: "Oswald", sans-serif;
+	--font-body: "Montserrat", sans-serif;
+
+	--cdlr-header-h: 84px;
+}
+@media (max-width: 56rem) {
+	:root {
+		--cdlr-header-h: 64px;
+	}
+}
+
+/* Contenedor compartido por header, footer, home y membresía */
+.cdlr-container {
+	max-width: 75rem;
+	margin-inline: auto;
+	padding-inline: clamp(1.25rem, 4vw, 3rem);
+}
+
+/* Templates a medida (membresía, la Grúa del Rock) no heredan las clases que
+ * page.php le da al wrapper de Astra para estirarse a todo el ancho — sin
+ * esto el contenido queda boxeado y pegado a la izquierda (mismo fix que ya
+ * se necesitó para body.home en premium.css). Sitewide porque cualquier
+ * template a medida puede necesitarlo, no solo home/membresía. */
+body.cdlr-full-bleed .site-content > .ast-container {
+	max-width: 100% !important;
+	padding: 0 !important;
+}
+
+/* Buttons (compartido entre el header y la portada) */
+.cdlr-btn {
+	font-family: var(--font-body);
+	font-weight: 600;
+	font-size: 0.95rem;
+	letter-spacing: 0.02em;
+	text-transform: uppercase;
+	padding: 0.9rem 1.75rem;
+	border-radius: 999px;
+	display: inline-flex;
+	align-items: center;
+	gap: 0.5rem;
+	text-decoration: none;
+	border: 1px solid transparent;
+	cursor: pointer;
+	transition: transform 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+}
+.cdlr-btn--primary {
+	background: var(--cdlr-accent);
+	color: #fff;
+}
+.cdlr-btn--primary:hover {
+	background: var(--cdlr-accent-2);
+	color: #fff;
+	transform: translateY(-2px);
+}
+.cdlr-btn--ghost {
+	background: transparent;
+	color: #fff;
+	border-color: rgba(255, 255, 255, 0.55);
+}
+.cdlr-btn--ghost:hover {
+	background: rgba(255, 255, 255, 0.12);
+	color: #fff;
+	transform: translateY(-2px);
+}
+.cdlr-btn--link {
+	background: none;
+	padding: 0.5rem 0;
+	color: inherit;
+	border-radius: 0;
+}
+/* Astra inyecta a:hover{color:var(--ast-global-color-1)} (azul genérico de
+ * fábrica, #045cb4) que le gana a nuestro color:inherit de reposo apenas
+ * entra el estado :hover (el pseudo-selector le suma especificidad). Sin
+ * este "color: inherit" repetido acá, cualquier .cdlr-btn--link se ve azul
+ * al pasar el mouse en vez de mantener su color real. */
+.cdlr-btn--link:hover {
+	color: inherit;
+}
+.cdlr-btn--link .cdlr-icon {
+	transition: transform 0.2s ease;
+}
+.cdlr-btn--link:hover .cdlr-icon {
+	transform: translateX(4px);
+}
+.cdlr-icon {
+	width: 1.1em;
+	height: 1.1em;
+}
+
+/* Header */
+.cdlr-header,
+.cdlr-header *,
+.cdlr-header *::before,
+.cdlr-header *::after,
+.cdlr-mobile-panel,
+.cdlr-mobile-panel *,
+.cdlr-mobile-panel *::before,
+.cdlr-mobile-panel *::after {
+	box-sizing: border-box;
+}
+
+.cdlr-header {
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	z-index: 9999;
+	background: transparent;
+	transition: background-color 0.3s ease, box-shadow 0.3s ease, backdrop-filter 0.3s ease;
+}
+.cdlr-header--solid,
+.cdlr-header--overlay.is-scrolled {
+	background: rgba(13, 13, 13, 0.92);
+	backdrop-filter: blur(10px);
+	box-shadow: 0 10px 30px -18px rgba(0, 0, 0, 0.7);
+}
+body.admin-bar .cdlr-header {
+	top: 32px;
+}
+@media (max-width: 48.9375rem) {
+	body.admin-bar .cdlr-header {
+		top: 46px;
+	}
+}
+
+body:not(.home) {
+	padding-top: var(--cdlr-header-h);
+}
+
+.cdlr-header__inner {
+	max-width: 87.5rem;
+	margin-inline: auto;
+	height: var(--cdlr-header-h);
+	padding-inline: clamp(1.25rem, 4vw, 3rem);
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1.5rem;
+}
+
+.cdlr-header__logo {
+	font-family: var(--font-display);
+	font-weight: 700;
+	font-size: clamp(1.05rem, 1rem + 0.4vw, 1.35rem);
+	text-transform: uppercase;
+	letter-spacing: 0.02em;
+	color: #fff;
+	text-decoration: none;
+	white-space: nowrap;
+	transition: color 0.2s ease;
+}
+/* Sin este :hover, cae en el mismo a:hover{color:var(--ast-global-color-1)}
+ * genérico de Astra que ya se corrigió en los botones (ver PROYECTO.md) — acá
+ * de paso se usa el color de acento de la marca en vez de solo repetir #fff,
+ * mismo tratamiento que ya tiene el ítem de menú activo. */
+.cdlr-header__logo:hover {
+	color: var(--cdlr-accent);
+}
+
+.cdlr-header__nav {
+	display: flex;
+	align-items: center;
+	gap: clamp(1.5rem, 3vw, 2.5rem);
+}
+.cdlr-header__menu {
+	display: flex;
+	align-items: center;
+	gap: clamp(1.25rem, 2.5vw, 2rem);
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+.cdlr-header__menu a {
+	font-family: var(--font-body);
+	font-weight: 600;
+	font-size: 0.85rem;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	color: rgba(255, 255, 255, 0.8);
+	text-decoration: none;
+	transition: color 0.2s ease;
+}
+.cdlr-header__menu a:hover {
+	color: #fff;
+}
+.cdlr-header__menu .current-menu-item > a,
+.cdlr-header__menu .current_page_item > a,
+.cdlr-header__menu a[aria-current="page"] {
+	color: var(--cdlr-accent);
+}
+.cdlr-header__cta {
+	padding: 0.6rem 1.4rem;
+	font-size: 0.8rem;
+}
+
+.cdlr-header__toggle {
+	display: none;
+	width: 2.75rem;
+	height: 2.75rem;
+	align-items: center;
+	justify-content: center;
+	background: none;
+	border: 0;
+	cursor: pointer;
+	color: #fff;
+}
+.cdlr-header__toggle-bars,
+.cdlr-header__toggle-bars::before,
+.cdlr-header__toggle-bars::after {
+	display: block;
+	width: 1.5rem;
+	height: 2px;
+	background: currentColor;
+	border-radius: 2px;
+	transition: transform 0.25s ease, opacity 0.25s ease;
+}
+.cdlr-header__toggle-bars {
+	position: relative;
+}
+.cdlr-header__toggle-bars::before,
+.cdlr-header__toggle-bars::after {
+	content: "";
+	position: absolute;
+	left: 0;
+}
+.cdlr-header__toggle-bars::before {
+	top: -7px;
+}
+.cdlr-header__toggle-bars::after {
+	top: 7px;
+}
+.cdlr-header__toggle[aria-expanded="true"] .cdlr-header__toggle-bars {
+	background: transparent;
+}
+.cdlr-header__toggle[aria-expanded="true"] .cdlr-header__toggle-bars::before {
+	top: 0;
+	transform: rotate(45deg);
+	background: #fff;
+}
+.cdlr-header__toggle[aria-expanded="true"] .cdlr-header__toggle-bars::after {
+	top: 0;
+	transform: rotate(-45deg);
+	background: #fff;
+}
+
+.cdlr-mobile-panel {
+	position: fixed;
+	top: var(--cdlr-header-h);
+	left: 0;
+	right: 0;
+	max-height: calc(100vh - var(--cdlr-header-h));
+	overflow-y: auto;
+	background: rgba(13, 13, 13, 0.98);
+	backdrop-filter: blur(10px);
+	padding: 1.5rem clamp(1.25rem, 4vw, 3rem) 2rem;
+	display: flex;
+	flex-direction: column;
+	gap: 1.75rem;
+	opacity: 0;
+	visibility: hidden;
+	transform: translateY(-8px);
+	transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s;
+}
+.cdlr-mobile-panel.is-open {
+	opacity: 1;
+	visibility: visible;
+	transform: translateY(0);
+}
+.cdlr-mobile-panel__menu {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 1.25rem;
+}
+.cdlr-mobile-panel__menu a {
+	font-family: var(--font-display);
+	font-weight: 600;
+	font-size: 1.1rem;
+	text-transform: uppercase;
+	letter-spacing: 0.02em;
+	color: #fff;
+	text-decoration: none;
+}
+.cdlr-mobile-panel__menu .current-menu-item > a,
+.cdlr-mobile-panel__menu .current_page_item > a,
+.cdlr-mobile-panel__menu a[aria-current="page"] {
+	color: var(--cdlr-accent);
+}
+.cdlr-mobile-panel .cdlr-btn {
+	justify-content: center;
+}
+
+@media (max-width: 56rem) {
+	.cdlr-header__nav {
+		display: none;
+	}
+	.cdlr-header__toggle {
+		display: inline-flex;
+	}
+}
+@media (min-width: 56.0625rem) {
+	.cdlr-mobile-panel {
+		display: none;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.cdlr-header,
+	.cdlr-mobile-panel,
+	.cdlr-header__toggle-bars,
+	.cdlr-header__toggle-bars::before,
+	.cdlr-header__toggle-bars::after {
+		transition: none;
+	}
+}

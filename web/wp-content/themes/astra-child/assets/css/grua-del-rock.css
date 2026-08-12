@@ -1,0 +1,175 @@
+/*
+ * Página La Grúa del Rock — mismos tokens/helpers de header.css/premium.css
+ * (.cdlr-container, .cdlr-eyebrow, .cdlr-section-title, [data-reveal],
+ * .cdlr-btn, .cdlr-hero__lead/__actions, .cdlr-stats, .cdlr-cta). Acá solo lo
+ * específico de esta página: hero con foto propia, sección "qué es",
+ * timeline de hitos y el bloque de Rutas Musicales Patrimoniales.
+ */
+
+/* Hero */
+.cdlr-grua-hero {
+	position: relative;
+	min-height: 90vh;
+	display: flex;
+	align-items: center;
+	color: #fff;
+	background-image: linear-gradient(180deg, rgba(0, 0, 0, 0.55) 0%, rgba(0, 0, 0, 0.8) 60%, rgba(0, 0, 0, 0.92) 100%), var(--hero-image);
+	background-size: cover;
+	background-position: center;
+	padding-block: clamp(7rem, 18vh, 10rem) clamp(4rem, 8vh, 6rem);
+}
+.cdlr-grua-hero__title {
+	font-family: var(--font-display);
+	font-weight: 700;
+	font-size: var(--fs-h1);
+	line-height: 1.05;
+	text-transform: uppercase;
+	margin: 0 0 1.25rem;
+	color: #fff;
+}
+.cdlr-grua-hero__title span {
+	color: var(--cdlr-accent);
+}
+
+/* Qué es */
+.cdlr-grua-about {
+	background: #fff;
+	color: var(--cdlr-text);
+	padding-block: clamp(4rem, 8vw, 6rem);
+}
+.cdlr-grua-about__grid {
+	display: grid;
+	gap: 2.5rem;
+	align-items: center;
+}
+@media (min-width: 56rem) {
+	.cdlr-grua-about__grid {
+		grid-template-columns: 1.1fr 1fr;
+	}
+}
+.cdlr-grua-about__copy .cdlr-eyebrow {
+	color: var(--cdlr-accent-ink);
+}
+.cdlr-grua-about__copy .cdlr-section-title {
+	text-align: left;
+	margin-bottom: 1rem;
+}
+.cdlr-grua-about__copy p {
+	font-family: var(--font-body);
+	line-height: 1.7;
+	color: #333;
+	margin: 0 0 1.25rem;
+}
+.cdlr-grua-about__media img {
+	border-radius: var(--radius);
+}
+
+/* Hitos / timeline (orden cronológico real) */
+.cdlr-grua-hitos {
+	background: var(--cdlr-ink);
+	color: #fff;
+	padding-block: clamp(4rem, 8vw, 6rem);
+}
+/* .cdlr-section-title trae color:var(--cdlr-text) por defecto (pensado para
+ * fondos claros) — sin esta excepción, el título queda casi negro sobre el
+ * fondo oscuro de esta sección, sin contraste (mismo patrón que ya se corrige
+ * en .cdlr-cta .cdlr-section-title de premium.css). */
+.cdlr-grua-hitos .cdlr-section-title {
+	color: #fff;
+}
+.cdlr-grua-hitos .cdlr-plans__lead {
+	color: var(--cdlr-body-dark);
+}
+.cdlr-timeline {
+	list-style: none;
+	margin: clamp(2rem, 4vw, 3rem) 0 0;
+	padding: 0;
+	display: grid;
+	gap: 0;
+	max-width: 46rem;
+	margin-inline: auto;
+}
+.cdlr-timeline__item {
+	position: relative;
+	padding: 0 0 clamp(2rem, 4vw, 2.75rem) 2.25rem;
+	border-left: 2px solid rgba(255, 255, 255, 0.15);
+}
+.cdlr-timeline__item:last-child {
+	padding-bottom: 0;
+}
+.cdlr-timeline__item::before {
+	content: "";
+	position: absolute;
+	left: -0.4375rem;
+	top: 0.35rem;
+	width: 0.75rem;
+	height: 0.75rem;
+	border-radius: 50%;
+	background: var(--cdlr-accent);
+}
+.cdlr-timeline__date {
+	font-family: var(--font-body);
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	font-size: 0.8rem;
+	color: var(--cdlr-accent);
+	display: block;
+	margin-bottom: 0.4rem;
+}
+.cdlr-timeline__item h3 {
+	font-family: var(--font-display);
+	text-transform: uppercase;
+	font-size: 1.2rem;
+	margin: 0 0 0.6rem;
+	color: #fff;
+}
+.cdlr-timeline__item p {
+	font-family: var(--font-body);
+	font-size: 0.95rem;
+	line-height: 1.65;
+	color: var(--cdlr-body-dark);
+	margin: 0;
+}
+
+/* Rutas Musicales Patrimoniales */
+.cdlr-grua-rutas {
+	background: #fff;
+	color: var(--cdlr-text);
+	padding-block: clamp(4rem, 8vw, 6rem);
+}
+.cdlr-grua-rutas__grid {
+	display: grid;
+	gap: 2rem;
+	align-items: start;
+}
+@media (min-width: 48rem) {
+	.cdlr-grua-rutas__grid {
+		grid-template-columns: auto 1fr;
+		align-items: center;
+	}
+}
+.cdlr-grua-rutas__icon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 4rem;
+	height: 4rem;
+	border-radius: 50%;
+	background: rgba(255, 69, 0, 0.12);
+	color: var(--cdlr-accent);
+	flex: none;
+}
+.cdlr-grua-rutas__icon .cdlr-icon {
+	width: 2rem;
+	height: 2rem;
+}
+.cdlr-grua-rutas .cdlr-eyebrow {
+	color: var(--cdlr-accent-ink);
+}
+.cdlr-grua-rutas p {
+	font-family: var(--font-body);
+	line-height: 1.7;
+	color: var(--cdlr-muted);
+	margin: 0;
+}
