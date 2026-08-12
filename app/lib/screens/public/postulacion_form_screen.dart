@@ -1,6 +1,7 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../models/banda_model.dart';
 import '../../models/proyecto_model.dart';
@@ -174,7 +175,16 @@ class _PostulacionFormScreenState extends ConsumerState<PostulacionFormScreen> {
     final proyectoAsync = ref.watch(proyectoPublicoActivoProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Postulación de Bandas')),
+      appBar: AppBar(
+        title: const Text('Postulación de Bandas'),
+        actions: [
+          IconButton(
+            tooltip: 'Ingreso administrativo',
+            icon: const Icon(Icons.admin_panel_settings_outlined),
+            onPressed: () => context.push('/admin/login'),
+          ),
+        ],
+      ),
       body: proyectoAsync.when(
         data: (proyecto) {
           if (proyecto == null) {

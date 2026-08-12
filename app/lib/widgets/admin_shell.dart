@@ -130,7 +130,15 @@ class _Sidebar extends ConsumerWidget {
           const Spacer(),
           const Divider(height: 1),
           Padding(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
+            child: _NavItem(
+              icon: Icons.campaign_outlined,
+              label: 'Formulario público',
+              onTap: () => context.push('/'),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
             child: _NavItem(
               icon: Icons.logout_rounded,
               label: 'Cerrar sesión',

@@ -1,0 +1,44 @@
+/*
+ * De La Raíz — variables de marca para el sitio PHP (web/).
+ * Espejo en CSS de design-system/tokens.json. Si cambia un valor, actualízalo
+ * en los tres lugares: tokens.json, este archivo, y app/lib/app/app_colors.dart.
+ *
+ * Uso en el sitio PHP:
+ *   <link rel="stylesheet" href="/design-system/brand.css">
+ * o copiarlo/importarlo dentro de tu propio bundle de CSS.
+ */
+
+:root {
+  /* Fondo y superficies (tema oscuro tipo dashboard) */
+  --lr-background: #0B0B0F;
+  --lr-surface: #16161D;
+  --lr-surface-elevated: #1C1C25;
+  --lr-border: #2A2A35;
+
+  /* Texto */
+  --lr-text-primary: #F5F5F7;
+  --lr-text-secondary: #9A9AA8;
+  --lr-text-muted: #6B6B78;
+
+  /* Acento de marca: naranja-rojo encendido (luces de escenario) */
+  --lr-accent: #FF6A3D;
+  --lr-accent-soft: rgba(255, 106, 61, 0.15);
+
+  /* Estados semánticos (postulaciones, fondos, etc.) */
+  --lr-pendiente: #FFC107;
+  --lr-pendiente-soft: rgba(255, 193, 7, 0.15);
+  --lr-seleccionada: #2ED573;
+  --lr-seleccionada-soft: rgba(46, 213, 115, 0.15);
+  --lr-rechazada: #FF4757;
+  --lr-rechazada-soft: rgba(255, 71, 87, 0.15);
+
+  /* Tipografía */
+  --lr-font-family: "Manrope", -apple-system, "Segoe UI", sans-serif;
+
+  /* Radios */
+  --lr-radius-sm: 12px;
+  --lr-radius-md: 14px;
+  --lr-radius-lg: 18px;
+  --lr-radius-xl: 20px;
+  --lr-radius-pill: 999px;
+}

@@ -35,6 +35,13 @@ class _AuthChangeNotifier extends ChangeNotifier {
   }
 }
 
+// TEMPORAL: mientras no exista una cuenta de Firebase Auth creada, se
+// omite la protección de las rutas `/admin/*` para poder revisar el panel
+// sin iniciar sesión. Poner en `false` en cuanto exista al menos un
+// usuario (ver README, sección "Puesta en marcha") — dejarlo en `true` en
+// producción expondría el panel administrativo sin autenticación.
+const bool _omitirAutenticacionTemporalmente = true;
+
 /// Rutas de la aplicación:
 /// - `/` : formulario público de postulación (sin autenticación).
 /// - `/admin/login` : acceso de la directiva de la corporación.
@@ -51,10 +58,19 @@ final routerProvider = Provider<GoRouter>((ref) {
   ref.onDispose(authNotifier.dispose);
 
   return GoRouter(
-    initialLocation: '/',
+    // El punto de entrada es el panel administrativo (protegido por el
+    // `redirect` de abajo, que manda a `/admin/login` si no hay sesión).
+    // El formulario público sigue disponible en "/" para compartir como
+    // enlace externo a las bandas, pero ya no es lo primero que se ve al
+    // abrir la app.
+    initialLocation: '/admin',
     refreshListenable: authNotifier,
     redirect: (context, state) {
-      final estaAutenticado = authService.currentUser != null;
+      // Con el bypass temporal activo, se trata como si siempre hubiera
+      // sesión — así el login queda inalcanzable en ambos sentidos (no
+      // solo "no te manda al login", sino "te saca si ya estabas ahí").
+      final estaAutenticado =
+          authService.currentUser != null || _omitirAutenticacionTemporalmente;
       final vaAlLogin = state.matchedLocation == '/admin/login';
       final esRutaAdmin = state.matchedLocation.startsWith('/admin');
 
