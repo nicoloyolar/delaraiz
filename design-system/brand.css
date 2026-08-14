@@ -9,20 +9,27 @@
  */
 
 :root {
-  /* Fondo y superficies (tema oscuro tipo dashboard) */
-  --lr-background: #0B0B0F;
-  --lr-surface: #16161D;
-  --lr-surface-elevated: #1C1C25;
-  --lr-border: #2A2A35;
+  /* Unificado 2026-08-12 con la paleta real del sitio (astra-child/assets/css/header.css +
+   * premium.css) — antes esto tenía una paleta propia de "dashboard" (#0B0B0F/#FF6A3D)
+   * desconectada de la marca real. Los estados semánticos de abajo (pendiente/
+   * seleccionada/rechazada) no se tocaron a propósito: no son identidad de marca. */
+
+  /* Fondo y superficies */
+  --lr-background: #0D0D0D;
+  --lr-surface: #1A1A1A;
+  --lr-surface-elevated: #232323;
+  --lr-border: #2A2A2A;
 
   /* Texto */
-  --lr-text-primary: #F5F5F7;
-  --lr-text-secondary: #9A9AA8;
-  --lr-text-muted: #6B6B78;
+  --lr-text-primary: #FFFFFF;
+  --lr-text-secondary: #E0E0E0;
+  --lr-text-muted: #4C5A60;
 
-  /* Acento de marca: naranja-rojo encendido (luces de escenario) */
-  --lr-accent: #FF6A3D;
-  --lr-accent-soft: rgba(255, 106, 61, 0.15);
+  /* Acento de marca: naranjo real de la Corporación */
+  --lr-accent: #FF4500;
+  --lr-accent-hover: #DF3513;
+  --lr-accent-ink: #B23A06;
+  --lr-accent-soft: rgba(255, 69, 0, 0.15);
 
   /* Estados semánticos (postulaciones, fondos, etc.) */
   --lr-pendiente: #FFC107;
@@ -32,13 +39,12 @@
   --lr-rechazada: #FF4757;
   --lr-rechazada-soft: rgba(255, 71, 87, 0.15);
 
-  /* Tipografía */
-  --lr-font-family: "Manrope", -apple-system, "Segoe UI", sans-serif;
+  /* Tipografía: Oswald para títulos/display, Montserrat para cuerpo — mismo
+   * criterio que --font-display/--font-body del sitio PHP. */
+  --lr-font-family-display: "Oswald", sans-serif;
+  --lr-font-family-body: "Montserrat", -apple-system, "Segoe UI", sans-serif;
 
   /* Radios */
-  --lr-radius-sm: 12px;
-  --lr-radius-md: 14px;
-  --lr-radius-lg: 18px;
-  --lr-radius-xl: 20px;
+  --lr-radius-base: 16px;
   --lr-radius-pill: 999px;
 }

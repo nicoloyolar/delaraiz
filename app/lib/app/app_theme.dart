@@ -3,10 +3,13 @@ import 'package:google_fonts/google_fonts.dart';
 
 import 'app_colors.dart';
 
-/// Tema visual centralizado de la app: Material 3 en modo oscuro, con
-/// tipografía Manrope y la paleta de marca de la Corporación de La Raíz
-/// ([AppColors]). Pensado como un dashboard premium, no un formulario
-/// genérico de Material por defecto.
+/// Tema visual centralizado de la app: Material 3 en modo oscuro, con la
+/// tipografía y paleta reales de la Corporación de La Raíz ([AppColors]) —
+/// Oswald para títulos y Montserrat para el cuerpo, mismo criterio que
+/// `--font-display`/`--font-body` del sitio institucional (unificado
+/// 2026-08-12, antes la app usaba Manrope sola, sin relación con la marca
+/// real). Pensado como un dashboard premium, no un formulario genérico de
+/// Material por defecto.
 class AppTheme {
   AppTheme._();
 
@@ -22,29 +25,33 @@ class AppTheme {
       error: AppColors.rechazada,
     );
 
-    final baseTextTheme = GoogleFonts.manropeTextTheme(ThemeData.dark().textTheme);
-    final textTheme = baseTextTheme.copyWith(
-      headlineSmall: baseTextTheme.headlineSmall?.copyWith(
-        fontWeight: FontWeight.w800,
+    // Montserrat como base (cuerpo) y Oswald superpuesto en los estilos de
+    // título/encabezado — mismo reparto que el sitio PHP (Oswald mayúsculas
+    // condensadas para títulos, Montserrat para todo lo demás).
+    final bodyTextTheme = GoogleFonts.montserratTextTheme(ThemeData.dark().textTheme);
+    final displayTextTheme = GoogleFonts.oswaldTextTheme(ThemeData.dark().textTheme);
+    final textTheme = bodyTextTheme.copyWith(
+      headlineSmall: displayTextTheme.headlineSmall?.copyWith(
+        fontWeight: FontWeight.w700,
         color: AppColors.textPrimary,
-        letterSpacing: -0.5,
+        letterSpacing: 0.2,
       ),
-      titleLarge: baseTextTheme.titleLarge?.copyWith(
-        fontWeight: FontWeight.w800,
-        color: AppColors.textPrimary,
-      ),
-      titleMedium: baseTextTheme.titleMedium?.copyWith(
+      titleLarge: displayTextTheme.titleLarge?.copyWith(
         fontWeight: FontWeight.w700,
         color: AppColors.textPrimary,
       ),
-      titleSmall: baseTextTheme.titleSmall?.copyWith(
-        fontWeight: FontWeight.w700,
+      titleMedium: displayTextTheme.titleMedium?.copyWith(
+        fontWeight: FontWeight.w600,
         color: AppColors.textPrimary,
       ),
-      bodyLarge: baseTextTheme.bodyLarge?.copyWith(color: AppColors.textPrimary),
-      bodyMedium: baseTextTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
-      bodySmall: baseTextTheme.bodySmall?.copyWith(color: AppColors.textMuted),
-      labelLarge: baseTextTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700),
+      titleSmall: displayTextTheme.titleSmall?.copyWith(
+        fontWeight: FontWeight.w600,
+        color: AppColors.textPrimary,
+      ),
+      bodyLarge: bodyTextTheme.bodyLarge?.copyWith(color: AppColors.textPrimary),
+      bodyMedium: bodyTextTheme.bodyMedium?.copyWith(color: AppColors.textSecondary),
+      bodySmall: bodyTextTheme.bodySmall?.copyWith(color: AppColors.textMuted),
+      labelLarge: bodyTextTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600),
     );
 
     return ThemeData(
@@ -69,15 +76,15 @@ class AppTheme {
         hintStyle: TextStyle(color: AppColors.textMuted),
         labelStyle: TextStyle(color: AppColors.textSecondary),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide(color: AppColors.border),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(16),
           borderSide: BorderSide(color: AppColors.border),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(16),
           borderSide: const BorderSide(color: AppColors.accent, width: 1.5),
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -86,7 +93,8 @@ class AppTheme {
         color: AppColors.surface,
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
+          // 16px: mismo --radius que usan las tarjetas del sitio (premium.css).
+          borderRadius: BorderRadius.circular(16),
           side: const BorderSide(color: AppColors.border),
         ),
       ),
@@ -95,7 +103,9 @@ class AppTheme {
           backgroundColor: AppColors.accent,
           foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          // Píldora (999px): mismo lenguaje que .cdlr-btn del sitio, no un
+          // rectángulo con esquinas redondeadas.
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
           textStyle: const TextStyle(fontWeight: FontWeight.w700),
         ),
       ),
@@ -104,7 +114,7 @@ class AppTheme {
           foregroundColor: AppColors.textPrimary,
           side: const BorderSide(color: AppColors.border),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
         ),
       ),
       textButtonTheme: TextButtonThemeData(
@@ -115,18 +125,18 @@ class AppTheme {
         menuStyle: MenuStyle(
           backgroundColor: WidgetStatePropertyAll(AppColors.surfaceElevated),
           shape: WidgetStatePropertyAll(
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           ),
         ),
       ),
       popupMenuTheme: PopupMenuThemeData(
         color: AppColors.surfaceElevated,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
       snackBarTheme: SnackBarThemeData(
         backgroundColor: AppColors.surfaceElevated,
         contentTextStyle: TextStyle(color: AppColors.textPrimary),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         behavior: SnackBarBehavior.floating,
       ),
     );

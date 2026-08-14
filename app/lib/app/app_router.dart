@@ -16,6 +16,7 @@ import '../screens/admin/login_screen.dart';
 import '../screens/admin/proyectos/proyecto_detail_screen.dart';
 import '../screens/admin/proyectos/proyectos_list_screen.dart';
 import '../screens/admin/resumen_screen.dart';
+import '../screens/public/credencial_screen.dart';
 import '../screens/public/postulacion_form_screen.dart';
 
 /// Adapta un `Stream` (en este caso, los cambios de sesión de Firebase
@@ -44,6 +45,8 @@ const bool _omitirAutenticacionTemporalmente = true;
 
 /// Rutas de la aplicación:
 /// - `/` : formulario público de postulación (sin autenticación).
+/// - `/credencial` : credencial digital del socio (login/registro propio,
+///   sin relación con el acceso admin — agregado 2026-08-12).
 /// - `/admin/login` : acceso de la directiva de la corporación.
 /// - `/admin` : Resumen ejecutivo con KPIs de todos los módulos (protegida).
 /// - `/admin/proyectos`, `/admin/proyectos/:id` : gestión de Proyectos.
@@ -86,6 +89,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/',
         builder: (context, state) => const PostulacionFormScreen(),
+      ),
+      GoRoute(
+        path: '/credencial',
+        builder: (context, state) => const CredencialScreen(),
       ),
       GoRoute(
         path: '/admin/login',

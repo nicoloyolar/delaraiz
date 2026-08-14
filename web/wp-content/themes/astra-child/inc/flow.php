@@ -330,6 +330,7 @@ function cdlr_flow_complete_signup_for_socio( $socio, $flow_token ) {
 
 	if ( is_wp_error( $register_status ) || ! cdlr_flow_card_registered( $register_status ) ) {
 		update_post_meta( $socio->ID, '_cdlr_status', 'rechazado' );
+		cdlr_flow_sync_credencial_firestore( $socio->ID );
 		return [ 'status' => 'rechazado', 'socio' => $socio ];
 	}
 
@@ -344,6 +345,7 @@ function cdlr_flow_complete_signup_for_socio( $socio, $flow_token ) {
 	if ( is_wp_error( $subscription ) || empty( $subscription['subscriptionId'] ) ) {
 		error_log( '[CDLR Flow] subscription/create falló (socio #' . $socio->ID . '): ' . wp_json_encode( $subscription ) );
 		update_post_meta( $socio->ID, '_cdlr_status', 'rechazado' );
+		cdlr_flow_sync_credencial_firestore( $socio->ID );
 		return [ 'status' => 'rechazado', 'socio' => $socio ];
 	}
 
@@ -354,6 +356,7 @@ function cdlr_flow_complete_signup_for_socio( $socio, $flow_token ) {
 	}
 
 	cdlr_flow_send_confirmation_emails( $socio->ID );
+	cdlr_flow_sync_credencial_firestore( $socio->ID );
 
 	return [ 'status' => 'activo', 'socio' => $socio ];
 }
@@ -484,6 +487,8 @@ function cdlr_flow_handle_webhook() {
 		}
 	}
 
+	cdlr_flow_sync_credencial_firestore( $socio->ID );
+
 	status_header( 200 );
 	exit;
 }
@@ -528,5 +533,173 @@ function cdlr_flow_reconcile_pending() {
 		// la persona no haya terminado — se marca cancelado para no dejarlo
 		// flotando como "pendiente" para siempre.
 		update_post_meta( $post->ID, '_cdlr_status', 'cancelado' );
+		cdlr_flow_sync_credencial_firestore( $post->ID );
+	}
+}
+
+
+/* ---------------------------------------------------------------------
+ * Credencial digital del socio (agregado 2026-08-12) — sincroniza el
+ * estado real de la membresía hacia Firestore, para que la app Flutter
+ * pueda mostrarlo en tiempo real sin consultarle nada al sitio PHP
+ * directamente. Este sitio sigue siendo la fuente de verdad; esto solo
+ * empuja una copia de lectura hacia la colección `credenciales` (ver
+ * `app/firebase/firestore.rules` y `app/lib/models/credencial_model.dart`
+ * en el monorepo `delaraiz`).
+ *
+ * Requiere una cuenta de servicio de Firebase (Consola de Firebase >
+ * Configuración del proyecto > Cuentas de servicio > Generar nueva clave
+ * privada) — de ese JSON se sacan `client_email` y `private_key` para las
+ * constantes `CDLR_FIREBASE_*` de wp-config.php. Mientras no existan, estas
+ * funciones no hacen nada (no rompen el flujo de Flow, que ya funciona sin
+ * esto) — no se pudo probar de punta a punta todavía porque el proyecto de
+ * Firebase real recién se crea mañana (ver PROYECTO.md).
+ * ------------------------------------------------------------------ */
+
+/**
+ * Codifica en base64url (sin padding) — variante que exige JWT, distinta
+ * del base64 estándar de PHP.
+ */
+function cdlr_flow_base64url( $data ) {
+	return rtrim( strtr( base64_encode( $data ), '+/', '-_' ), '=' );
+}
+
+/**
+ * Consigue (y cachea ~55 minutos, vía transient) un token de acceso OAuth2
+ * para la cuenta de servicio de Firebase. Sin librerías nuevas: se firma un
+ * JWT a mano con `openssl_sign()` (nativo de PHP, mismo criterio que la
+ * firma HMAC de Flow más arriba en este archivo) y se cambia por un token
+ * en el endpoint de Google — flujo estándar "JWT Bearer" de OAuth2 para
+ * cuentas de servicio.
+ *
+ * @return string|WP_Error
+ */
+function cdlr_flow_firebase_access_token() {
+	$cached = get_transient( 'cdlr_firebase_access_token' );
+	if ( $cached ) {
+		return $cached;
+	}
+
+	$now    = time();
+	$header = [ 'alg' => 'RS256', 'typ' => 'JWT' ];
+	$claims = [
+		'iss'   => CDLR_FIREBASE_CLIENT_EMAIL,
+		'scope' => 'https://www.googleapis.com/auth/datastore',
+		'aud'   => 'https://oauth2.googleapis.com/token',
+		'iat'   => $now,
+		'exp'   => $now + 3600,
+	];
+
+	$signing_input = cdlr_flow_base64url( wp_json_encode( $header ) ) . '.' . cdlr_flow_base64url( wp_json_encode( $claims ) );
+
+	// La llave privada del JSON de Firebase trae saltos de línea reales,
+	// pero si se pegó en wp-config.php como texto plano puede haber quedado
+	// con "\n" literales (dos caracteres) en vez de saltos reales — se
+	// normaliza acá para aceptar cualquiera de los dos formatos.
+	$private_key_pem = str_replace( '\\n', "\n", CDLR_FIREBASE_PRIVATE_KEY );
+	$private_key     = openssl_pkey_get_private( $private_key_pem );
+	if ( ! $private_key ) {
+		return new WP_Error( 'cdlr_firebase_key', 'No se pudo leer la llave privada de Firebase — revisar el formato en wp-config.php.' );
+	}
+
+	$signature = '';
+	$firmado   = openssl_sign( $signing_input, $signature, $private_key, 'SHA256' );
+	if ( ! $firmado ) {
+		return new WP_Error( 'cdlr_firebase_sign', 'No se pudo firmar el JWT para Firebase.' );
+	}
+
+	$jwt = $signing_input . '.' . cdlr_flow_base64url( $signature );
+
+	$response = wp_remote_post( 'https://oauth2.googleapis.com/token', [
+		'body'    => [
+			'grant_type' => 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+			'assertion'  => $jwt,
+		],
+		'timeout' => 15,
+	] );
+
+	if ( is_wp_error( $response ) ) {
+		return $response;
+	}
+
+	$body = json_decode( wp_remote_retrieve_body( $response ), true );
+	if ( empty( $body['access_token'] ) ) {
+		return new WP_Error( 'cdlr_firebase_token', 'Google no devolvió un access_token: ' . wp_remote_retrieve_body( $response ) );
+	}
+
+	// Se cachea un poco menos que su duración real (3600s) para no usarlo
+	// justo cuando está por vencer.
+	set_transient( 'cdlr_firebase_access_token', $body['access_token'], 3300 );
+
+	return $body['access_token'];
+}
+
+/**
+ * Escribe (crea o actualiza, "upsert") el documento `credenciales/{email}`
+ * en Firestore con el estado actual del socio. Se llama cada vez que
+ * cambia `_cdlr_status` — ver los 4 puntos donde se invoca más arriba en
+ * este archivo (alta, webhook de cobro exitoso/fallido, y el cron de
+ * reconciliación).
+ */
+function cdlr_flow_sync_credencial_firestore( $socio_id ) {
+	if ( ! defined( 'CDLR_FIREBASE_PROJECT_ID' ) || ! defined( 'CDLR_FIREBASE_CLIENT_EMAIL' ) || ! defined( 'CDLR_FIREBASE_PRIVATE_KEY' ) ) {
+		return; // Firebase todavía no está configurado — no es un error, solo no hay nada que sincronizar hacia allá por ahora.
+	}
+
+	$email = get_post_meta( $socio_id, '_cdlr_email', true );
+	if ( ! is_email( $email ) ) {
+		return;
+	}
+	$email = strtolower( trim( $email ) );
+
+	$access_token = cdlr_flow_firebase_access_token();
+	if ( is_wp_error( $access_token ) ) {
+		error_log( '[CDLR Flow] No se pudo obtener token de acceso a Firebase: ' . $access_token->get_error_message() );
+		return;
+	}
+
+	$plan_slug   = get_post_meta( $socio_id, '_cdlr_plan', true );
+	$estado      = get_post_meta( $socio_id, '_cdlr_status', true );
+	$next_charge = get_post_meta( $socio_id, '_cdlr_next_charge_date', true );
+
+	$fields = [
+		'email'         => [ 'stringValue' => $email ],
+		'nombre'        => [ 'stringValue' => get_the_title( $socio_id ) ],
+		'plan'          => [ 'stringValue' => $plan_slug ],
+		'estado'        => [ 'stringValue' => $estado ],
+		'actualizadoEn' => [ 'timestampValue' => gmdate( 'Y-m-d\TH:i:s\Z' ) ],
+	];
+	if ( $next_charge ) {
+		$fields['proximoCobro'] = [ 'timestampValue' => gmdate( 'Y-m-d\TH:i:s\Z', strtotime( $next_charge ) ) ];
+	}
+
+	// PATCH sobre la ruta del documento hace "upsert" (crea si no existe) en
+	// la API REST de Firestore — no hace falta un paso aparte para crear.
+	$url = sprintf(
+		'https://firestore.googleapis.com/v1/projects/%s/databases/(default)/documents/credenciales/%s',
+		CDLR_FIREBASE_PROJECT_ID,
+		rawurlencode( $email )
+	);
+	foreach ( array_keys( $fields ) as $campo ) {
+		$url = add_query_arg( 'updateMask.fieldPaths', $campo, $url );
+	}
+
+	$response = wp_remote_request( $url, [
+		'method'  => 'PATCH',
+		'headers' => [
+			'Authorization' => 'Bearer ' . $access_token,
+			'Content-Type'  => 'application/json',
+		],
+		'body'    => wp_json_encode( [ 'fields' => $fields ] ),
+		'timeout' => 15,
+	] );
+
+	if ( is_wp_error( $response ) ) {
+		error_log( '[CDLR Flow] Error de red sincronizando credencial a Firestore (socio #' . $socio_id . '): ' . $response->get_error_message() );
+		return;
+	}
+	$code = wp_remote_retrieve_response_code( $response );
+	if ( $code >= 400 ) {
+		error_log( '[CDLR Flow] Firestore devolvió error (HTTP ' . $code . ') sincronizando credencial (socio #' . $socio_id . '): ' . wp_remote_retrieve_body( $response ) );
 	}
 }

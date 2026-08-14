@@ -5,6 +5,7 @@ import '../models/actividad_model.dart';
 import '../models/banda_model.dart';
 import '../models/bitacora_entry_model.dart';
 import '../models/componente_model.dart';
+import '../models/credencial_model.dart';
 import '../models/documento_model.dart';
 import '../models/espacio_model.dart';
 import '../models/persona_model.dart';
@@ -14,6 +15,7 @@ import '../models/proyecto_model.dart';
 import '../models/rendicion_model.dart';
 import '../services/auth_service.dart';
 import '../services/banda_service.dart';
+import '../services/credencial_service.dart';
 import '../services/documento_service.dart';
 import '../services/espacio_service.dart';
 import '../services/fondo_service.dart';
@@ -36,12 +38,30 @@ final personaServiceProvider = Provider<PersonaService>((ref) => PersonaService(
 
 final fondoServiceProvider = Provider<FondoService>((ref) => FondoService());
 
+final credencialServiceProvider = Provider<CredencialService>((ref) => CredencialService());
+
 /// --- Autenticación ---
 
 /// Emite el usuario actual cada vez que cambia la sesión. El router lo
-/// observa para decidir si redirige a `/admin/login` o al dashboard.
+/// observa para decidir si redirige a `/admin/login` o al dashboard, y la
+/// pantalla de credencial lo usa para saber si mostrar el login/registro o
+/// la credencial ya activa.
 final authStateProvider = StreamProvider<User?>((ref) {
   return ref.watch(authServiceProvider).authStateChanges;
+});
+
+/// --- Credencial digital de socio (agregado 2026-08-12) ---
+
+/// La credencial del socio autenticado actualmente, o `null` si no hay
+/// sesión iniciada o no existe ningún documento para su correo. Se
+/// recalcula solo cuando cambia la sesión (no es un `.family` por email
+/// suelto, para no tener que pasarle el correo a mano desde cada pantalla).
+final credencialActualProvider = StreamProvider.autoDispose<CredencialModel?>((ref) {
+  final user = ref.watch(authStateProvider).valueOrNull;
+  if (user?.email == null) {
+    return Stream.value(null);
+  }
+  return ref.watch(credencialServiceProvider).streamCredencial(user!.email!);
 });
 
 /// --- Proyectos ---

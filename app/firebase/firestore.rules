@@ -3,6 +3,22 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // Verifica que el usuario autenticado tenga un perfil en `usuarios/{uid}`
+    // marcado como admin y activo. Reemplaza el modelo anterior ("cualquier
+    // cuenta autenticada es admin total", ver comentario viejo más abajo) —
+    // hallazgo de seguridad del análisis del sistema completo, 2026-08-12.
+    // El primer usuario admin se crea a mano en la Consola de Firebase:
+    // primero la cuenta en Authentication, y ADEMÁS el documento
+    // correspondiente acá en Firestore (`usuarios/{uid}` con `rol: "admin"`,
+    // `activo: true`) — a propósito no hay auto-registro ni bootstrapping
+    // automático que cree ese documento solo.
+    function esAdminActivo() {
+      return request.auth != null &&
+        exists(/databases/$(database)/documents/usuarios/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'admin' &&
+        get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.activo == true;
+    }
+
     match /bandas_postulaciones/{bandaId} {
 
       // Cualquier persona puede postular (formulario público) — pero solo
@@ -17,54 +33,69 @@ service cloud.firestore {
         request.resource.data.proyectoId.size() > 0 &&
         request.resource.data.estado == 'pendiente';
 
-      // Leer, actualizar estado o eliminar solo lo puede hacer la
-      // directiva autenticada desde el Dashboard.
-      allow read, update, delete: if request.auth != null;
+      // Leer, actualizar estado o eliminar solo lo puede hacer un admin
+      // activo (antes: cualquier cuenta autenticada).
+      allow read, update, delete: if esAdminActivo();
     }
 
     match /documentos_institucionales/{documentoId} {
       // Documentación interna de la Corporación (estatutos, actas,
       // contratos, informes): a diferencia de las postulaciones, aquí no
-      // hay escritura pública — solo la directiva autenticada puede leer,
-      // crear, actualizar o eliminar.
-      allow read, create, update, delete: if request.auth != null;
+      // hay escritura pública — solo un admin activo puede leer, crear,
+      // actualizar o eliminar.
+      allow read, create, update, delete: if esAdminActivo();
     }
 
     // --- Proyectos y sus subcolecciones ---
     // La entidad central de la plataforma: uso exclusivamente interno.
-    // Hoy todo usuario autenticado es admin (un solo nivel de acceso); la
-    // fase de roles granulares reemplazará esta condición sin tener que
-    // migrar el modelo de datos.
     match /proyectos/{proyectoId} {
-      allow read, create, update, delete: if request.auth != null;
+      allow read, create, update, delete: if esAdminActivo();
 
       match /{subcoleccion}/{docId} {
-        allow read, create, update, delete: if request.auth != null;
+        allow read, create, update, delete: if esAdminActivo();
       }
     }
 
     // --- Espacios recuperados ---
     match /espacios/{espacioId} {
-      allow read, create, update, delete: if request.auth != null;
+      allow read, create, update, delete: if esAdminActivo();
     }
 
     // --- Equipo y voluntarios ---
     match /personas/{personaId} {
-      allow read, create, update, delete: if request.auth != null;
+      allow read, create, update, delete: if esAdminActivo();
     }
 
-    // --- Perfiles de acceso al sistema (base para roles futuros) ---
+    // --- Perfiles de acceso al sistema ---
     match /usuarios/{uid} {
-      allow read, create, update, delete: if request.auth != null;
+      // Cualquier usuario autenticado puede leer SU PROPIO perfil — así la
+      // app puede verificar si es admin activo sin quedar en un círculo
+      // vicioso (esAdminActivo() necesita poder leer este documento).
+      // Todo lo demás (leer perfiles ajenos, crear, modificar, eliminar)
+      // requiere ya ser admin activo.
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow read, create, update, delete: if esAdminActivo();
     }
 
     // --- Fondos y financiamiento ---
     match /postulaciones_fondos/{postulacionId} {
-      allow read, create, update, delete: if request.auth != null;
+      allow read, create, update, delete: if esAdminActivo();
 
       match /rendiciones/{rendicionId} {
-        allow read, create, update, delete: if request.auth != null;
+        allow read, create, update, delete: if esAdminActivo();
       }
+    }
+
+    // --- Credencial digital de socios (agregado 2026-08-12) ---
+    // El ID de cada documento es el correo del socio en minúsculas. Esta
+    // colección la escribe ÚNICAMENTE el sitio PHP, mediante una cuenta de
+    // servicio de Firebase (Admin SDK / API REST autenticada) — ese tipo de
+    // acceso no pasa por estas reglas de seguridad en absoluto, por eso
+    // "allow write: if false" para cualquier cliente (app o navegador) es
+    // correcto y no bloquea la sincronización real.
+    match /credenciales/{email} {
+      allow read: if request.auth != null && request.auth.token.email.lower() == email;
+      allow write: if false;
     }
   }
 }
