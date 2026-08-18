@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "490044936327",
+    "project_id": "delaraiz-app",
+    "storage_bucket": "delaraiz-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:490044936327:android:a2629574c4f5cc82f3e822",
+        "android_client_info": {
+          "package_name": "cl.laraiz.delaraiz"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDk0YDoR-jg9x39SyaKFWoZ0c73ffs5DwM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

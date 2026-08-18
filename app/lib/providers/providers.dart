@@ -6,6 +6,7 @@ import '../models/banda_model.dart';
 import '../models/bitacora_entry_model.dart';
 import '../models/componente_model.dart';
 import '../models/credencial_model.dart';
+import '../models/cupon_model.dart';
 import '../models/documento_model.dart';
 import '../models/espacio_model.dart';
 import '../models/persona_model.dart';
@@ -16,6 +17,7 @@ import '../models/rendicion_model.dart';
 import '../services/auth_service.dart';
 import '../services/banda_service.dart';
 import '../services/credencial_service.dart';
+import '../services/cupones_service.dart';
 import '../services/documento_service.dart';
 import '../services/espacio_service.dart';
 import '../services/fondo_service.dart';
@@ -42,6 +44,8 @@ final fondoServiceProvider = Provider<FondoService>((ref) => FondoService());
 final credencialServiceProvider = Provider<CredencialService>((ref) => CredencialService());
 
 final sociosAdminServiceProvider = Provider<SociosAdminService>((ref) => SociosAdminService());
+
+final cuponesServiceProvider = Provider<CuponesService>((ref) => CuponesService());
 
 /// --- Autenticación ---
 
@@ -71,6 +75,16 @@ final credencialActualProvider = StreamProvider.autoDispose<CredencialModel?>((r
 
 final sociosStreamProvider = StreamProvider.autoDispose<List<CredencialModel>>((ref) {
   return ref.watch(sociosAdminServiceProvider).streamSocios();
+});
+
+/// --- Cupones de descuento (agregado 2026-08-18) ---
+///
+/// No es un StreamProvider como el resto de la app: los cupones no viven en
+/// Firestore (ver `CuponesService`), así que no hay un stream en vivo al que
+/// suscribirse. Después de crear un cupón o cambiarle el estado, la pantalla
+/// llama `ref.invalidate(cuponesListProvider)` para refrescar la lista.
+final cuponesListProvider = FutureProvider.autoDispose<List<CuponModel>>((ref) {
+  return ref.watch(cuponesServiceProvider).listar();
 });
 
 /// --- Proyectos ---

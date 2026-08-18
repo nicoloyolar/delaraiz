@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../models/credencial_model.dart';
@@ -24,48 +22,19 @@ class SociosAdminService {
   CollectionReference<Map<String, dynamic>> get _collection =>
       _firestore.collection(_collectionPath);
 
-  /// Transmite todos los socios, más recientes primero. Si Firestore no
-  /// responde (típicamente porque todavía no hay un proyecto de Firebase
-  /// real conectado — ver `firebase_options.dart`) o la colección está
-  /// vacía, muestra un único socio de ejemplo (Pablo Rifo, plan Amigo,
-  /// activo) para que el diseño de la pantalla se pueda revisar igual.
-  /// Apenas haya datos reales, el placeholder deja de aparecer solo.
+  /// Transmite todos los socios, más recientes primero. Una colección vacía
+  /// se muestra tal cual (el proyecto real de Firebase ya está conectado
+  /// desde el 2026-08-18 — antes de eso, mientras no había backend real,
+  /// este método mostraba un socio de ejemplo para poder revisar el diseño;
+  /// ya no hace falta). Si el stream de Firestore falla, se propaga el
+  /// error (la pantalla ya sabe mostrarlo) en vez de disfrazarlo con datos
+  /// falsos.
   Stream<List<CredencialModel>> streamSocios() {
-    try {
-      return _collection
-          .orderBy('actualizadoEn', descending: true)
-          .snapshots()
-          .transform(
-            StreamTransformer<QuerySnapshot<Map<String, dynamic>>, List<CredencialModel>>.fromHandlers(
-              handleData: (snapshot, sink) {
-                if (snapshot.docs.isEmpty) {
-                  sink.add([_placeholderPabloRifo]);
-                  return;
-                }
-                sink.add(snapshot.docs.map(CredencialModel.fromFirestore).toList());
-              },
-              handleError: (error, stackTrace, sink) {
-                sink.add([_placeholderPabloRifo]);
-              },
-            ),
-          );
-    } catch (_) {
-      return Stream.value([_placeholderPabloRifo]);
-    }
+    return _collection
+        .orderBy('actualizadoEn', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map(CredencialModel.fromFirestore).toList());
   }
-
-  /// Dato de ejemplo mientras no hay Firebase real conectado — Pablo Rifo
-  /// aportó $5.000 (plan Amigo) en la primera prueba real de Flow (ver
-  /// `PROYECTO.md`, sección 5.1, prueba del 2026-08-04). No vive en
-  /// Firestore, es puramente de demostración visual.
-  static final CredencialModel _placeholderPabloRifo = CredencialModel(
-    email: 'pablo.1rifo.1@gmail.com',
-    nombre: 'Pablo Rifo (ejemplo)',
-    plan: NivelMembresia.amigo,
-    estado: EstadoCredencial.activo,
-    proximoCobro: DateTime(2026, 9, 4),
-    actualizadoEn: DateTime(2026, 8, 4),
-  );
 
   /// Actualiza SOLO la capa de moderación manual de un socio — nunca su
   /// estado real de Flow. Usa `update` (no `set`/`merge`) a propósito: un

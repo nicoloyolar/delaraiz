@@ -21,8 +21,19 @@ if ( function_exists( 'do_action' ) ) {
 	do_action( 'litespeed_control_set_nocache', 'cdlr-membresia-retorno' );
 }
 
-$return_token = isset( $_GET['rt'] ) ? sanitize_text_field( wp_unslash( $_GET['rt'] ) ) : '';
-$flow_token   = isset( $_GET['token'] ) ? sanitize_text_field( wp_unslash( $_GET['token'] ) ) : '';
+// $_REQUEST (no $_GET): la documentación de Flow dice que el retorno del
+// navegador se hace "mediante una llamada POST a la urlCallback pasando el
+// token como parámetro" — no un GET con el token en la URL como se asumió
+// al escribir esto originalmente. El "rt" propio sí sigue llegando siempre
+// (es parte de la URL de "url_return" que nosotros mismos armamos, no algo
+// que dependa del método HTTP), pero "token" solo llegaba si Flow lo
+// mandaba por GET — nunca si lo manda por POST, que es el caso real. Bug
+// real encontrado el 2026-08-18 con una prueba real (ver PROYECTO.md,
+// sección 9.9): la página SIEMPRE mostraba "Algo no calzó" para cualquier
+// socio, no solo si se reenviaba el formulario dos veces como se sospechaba
+// antes. $_REQUEST cubre ambos casos sin tener que adivinar cuál usa Flow.
+$return_token = isset( $_REQUEST['rt'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['rt'] ) ) : '';
+$flow_token   = isset( $_REQUEST['token'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['token'] ) ) : '';
 
 $result = cdlr_flow_complete_signup( $return_token, $flow_token );
 $status = $result['status'];

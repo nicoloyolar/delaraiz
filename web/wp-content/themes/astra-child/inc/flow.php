@@ -142,6 +142,17 @@ add_action( 'init', function () {
 		'show_ui'  => false,
 		'supports' => [ 'title' ],
 	] );
+	// Cupones de descuento (agregado 2026-08-18) — mismo patrón que
+	// cdlr_socio: sin UI en wp-admin, el cupón "real" vive en Flow
+	// (/coupon/create); este CPT es solo la libreta que relaciona un código
+	// legible (post_title) con el ID numérico que le asignó Flow, más los
+	// contadores de uso que Flow no expone consultar directamente.
+	register_post_type( 'cdlr_cupon', [
+		'label'    => 'Cupones (Flow)',
+		'public'   => false,
+		'show_ui'  => false,
+		'supports' => [ 'title' ],
+	] );
 } );
 
 function cdlr_flow_find_socio( $meta_key, $meta_value ) {
@@ -160,6 +171,249 @@ function cdlr_flow_find_socio( $meta_key, $meta_value ) {
 
 function cdlr_flow_find_socio_by_email( $email ) {
 	return cdlr_flow_find_socio( '_cdlr_email', $email );
+}
+
+
+/* ---------------------------------------------------------------------
+ * Cupones de descuento (agregado 2026-08-18) — para que la directiva pueda
+ * aportar con un % de descuento (hasta 100%, o sea $0 de cobro real) sin
+ * dejar de pasar por el mismo flujo de Flow. Los cupones se crean desde el
+ * panel admin de la app Flutter (ver cdlr_cupones_handle_crear() más
+ * abajo), que llama acá mediante un endpoint autenticado con el ID token de
+ * Firebase de quien esté logueado en /admin — nunca con un secreto suelto
+ * en el código de la app.
+ * ------------------------------------------------------------------ */
+
+/**
+ * Normaliza un código de cupón para comparar sin importar mayúsculas ni
+ * espacios de más — mismo criterio en todos lados (creación, validación,
+ * listado) para que "directorio2026" y "DIRECTORIO2026 " sean el mismo
+ * cupón.
+ */
+function cdlr_flow_normalizar_codigo_cupon( $codigo ) {
+	return strtoupper( trim( (string) $codigo ) );
+}
+
+function cdlr_flow_find_cupon_by_codigo( $codigo ) {
+	$normalizado = cdlr_flow_normalizar_codigo_cupon( $codigo );
+	if ( '' === $normalizado ) {
+		return null;
+	}
+	$posts = get_posts( [
+		'post_type'      => 'cdlr_cupon',
+		'posts_per_page' => 1,
+		'post_status'    => 'any',
+		'meta_key'       => '_cdlr_codigo_normalizado',
+		'meta_value'     => $normalizado,
+	] );
+	return $posts ? $posts[0] : null;
+}
+
+/**
+ * Crea un cupón real en Flow (`/coupon/create`) y el post `cdlr_cupon` que
+ * lo relaciona con un código legible. `$usos_maximos` = 0 significa sin
+ * límite de usos (Flow no recibe ese parámetro en ese caso — se controla
+ * enteramente de nuestro lado, ver cdlr_flow_validar_codigo_cupon()).
+ *
+ * @return array{post_id:int,flow_coupon_id:int}|WP_Error
+ */
+function cdlr_flow_crear_cupon( $codigo, $percent_off, $usos_maximos = 0, $expira = '' ) {
+	$normalizado = cdlr_flow_normalizar_codigo_cupon( $codigo );
+	if ( '' === $normalizado ) {
+		return new WP_Error( 'cdlr_cupon_codigo', 'El código del cupón no puede estar vacío.' );
+	}
+	if ( cdlr_flow_find_cupon_by_codigo( $normalizado ) ) {
+		return new WP_Error( 'cdlr_cupon_duplicado', 'Ya existe un cupón con ese código.' );
+	}
+	$percent_off = (float) $percent_off;
+	if ( $percent_off <= 0 || $percent_off > 100 ) {
+		return new WP_Error( 'cdlr_cupon_porcentaje', 'El porcentaje de descuento debe estar entre 1 y 100.' );
+	}
+
+	$params = [
+		'name'     => $normalizado,
+		// duration=0 (indefinido): el descuento aplica a todos los cobros
+		// mientras la suscripción exista, no solo a los primeros N meses —
+		// el caso de uso real (directores aportando gratis) es permanente,
+		// no una promoción de lanzamiento.
+		'duration' => 0,
+	];
+	if ( $percent_off === (float) (int) $percent_off ) {
+		$params['percent_off'] = (int) $percent_off;
+	} else {
+		$params['percent_off'] = $percent_off;
+	}
+	if ( $usos_maximos > 0 ) {
+		$params['max_redemptions'] = (int) $usos_maximos;
+	}
+	if ( $expira ) {
+		$params['expires'] = $expira;
+	}
+
+	$result = cdlr_flow_request( 'POST', 'coupon/create', $params );
+	if ( is_wp_error( $result ) || empty( $result['id'] ) ) {
+		return is_wp_error( $result ) ? $result : new WP_Error( 'cdlr_cupon_flow', 'Flow no devolvió un ID de cupón.' );
+	}
+
+	$post_id = wp_insert_post( [
+		'post_type'   => 'cdlr_cupon',
+		'post_title'  => $normalizado,
+		'post_status' => 'private',
+	] );
+	if ( is_wp_error( $post_id ) ) {
+		return $post_id;
+	}
+
+	update_post_meta( $post_id, '_cdlr_codigo_normalizado', $normalizado );
+	update_post_meta( $post_id, '_cdlr_flow_coupon_id', (int) $result['id'] );
+	update_post_meta( $post_id, '_cdlr_descuento_pct', $percent_off );
+	update_post_meta( $post_id, '_cdlr_usos_maximos', (int) $usos_maximos );
+	update_post_meta( $post_id, '_cdlr_usos_actuales', 0 );
+	update_post_meta( $post_id, '_cdlr_activo', 1 );
+	update_post_meta( $post_id, '_cdlr_expira', $expira );
+
+	return [ 'post_id' => $post_id, 'flow_coupon_id' => (int) $result['id'] ];
+}
+
+function cdlr_flow_cupon_a_array( $post ) {
+	return [
+		'id'            => $post->ID,
+		'codigo'        => $post->post_title,
+		'flowCouponId'  => (int) get_post_meta( $post->ID, '_cdlr_flow_coupon_id', true ),
+		'descuentoPct'  => (float) get_post_meta( $post->ID, '_cdlr_descuento_pct', true ),
+		'usosMaximos'   => (int) get_post_meta( $post->ID, '_cdlr_usos_maximos', true ),
+		'usosActuales'  => (int) get_post_meta( $post->ID, '_cdlr_usos_actuales', true ),
+		'activo'        => (bool) get_post_meta( $post->ID, '_cdlr_activo', true ),
+		'expira'        => (string) get_post_meta( $post->ID, '_cdlr_expira', true ),
+		'creadoEn'      => $post->post_date_gmt,
+	];
+}
+
+function cdlr_flow_listar_cupones() {
+	$posts = get_posts( [
+		'post_type'      => 'cdlr_cupon',
+		'posts_per_page' => -1,
+		'post_status'    => 'any',
+		'orderby'        => 'date',
+		'order'          => 'DESC',
+	] );
+	return array_map( 'cdlr_flow_cupon_a_array', $posts );
+}
+
+/**
+ * Prende/apaga un cupón de nuestro lado (no llama a Flow para
+ * habilitar/deshabilitar el cupón allá — más simple, y suficiente: un
+ * cupón "inactivo" acá nunca se le pasa a subscription/create, así que
+ * nunca se usa aunque siga existiendo en Flow).
+ */
+function cdlr_flow_activar_cupon( $post_id, $activo ) {
+	if ( 'cdlr_cupon' !== get_post_type( $post_id ) ) {
+		return new WP_Error( 'cdlr_cupon_no_encontrado', 'Cupón no encontrado.' );
+	}
+	update_post_meta( $post_id, '_cdlr_activo', $activo ? 1 : 0 );
+	return true;
+}
+
+/**
+ * Elimina un cupón por completo (a diferencia de cdlr_flow_activar_cupon(),
+ * que solo lo apaga). `coupon/delete` en Flow en la práctica solo lo marca
+ * inactivo de su lado (status=0, confirmado probando contra producción
+ * 2026-08-18) — no lo borra físicamente allá, pero no importa: nunca más se
+ * le va a pasar ese couponId a subscription/create desde acá, y de nuestro
+ * lado el post desaparece del todo (no queda ni desactivado en la lista).
+ */
+function cdlr_flow_eliminar_cupon( $post_id ) {
+	if ( 'cdlr_cupon' !== get_post_type( $post_id ) ) {
+		return new WP_Error( 'cdlr_cupon_no_encontrado', 'Cupón no encontrado.' );
+	}
+	$flow_coupon_id = (int) get_post_meta( $post_id, '_cdlr_flow_coupon_id', true );
+	if ( $flow_coupon_id ) {
+		$result = cdlr_flow_request( 'POST', 'coupon/delete', [ 'couponId' => $flow_coupon_id ] );
+		if ( is_wp_error( $result ) ) {
+			// No es fatal: aunque Flow no confirme la baja de su lado, seguimos
+			// adelante y borramos el post — lo que importa de verdad es que
+			// nunca más se use ese couponId desde este sitio.
+			error_log( '[CDLR Flow] coupon/delete falló para cupón #' . $post_id . ' (Flow id ' . $flow_coupon_id . '): ' . $result->get_error_message() );
+		}
+	}
+	wp_delete_post( $post_id, true );
+	return true;
+}
+
+/**
+ * Valida un código de cupón ingresado en /membresia/ — existe, está
+ * activo, no expiró y no superó su máximo de usos.
+ *
+ * @return array{post_id:int,flow_coupon_id:int}|WP_Error
+ */
+function cdlr_flow_validar_codigo_cupon( $codigo ) {
+	$post = cdlr_flow_find_cupon_by_codigo( $codigo );
+	if ( ! $post ) {
+		return new WP_Error( 'cdlr_cupon_invalido', 'Ese cupón no existe.' );
+	}
+	if ( ! (bool) get_post_meta( $post->ID, '_cdlr_activo', true ) ) {
+		return new WP_Error( 'cdlr_cupon_inactivo', 'Ese cupón ya no está activo.' );
+	}
+	$expira = get_post_meta( $post->ID, '_cdlr_expira', true );
+	if ( $expira && strtotime( $expira ) < time() ) {
+		return new WP_Error( 'cdlr_cupon_expirado', 'Ese cupón ya expiró.' );
+	}
+	$usos_maximos  = (int) get_post_meta( $post->ID, '_cdlr_usos_maximos', true );
+	$usos_actuales = (int) get_post_meta( $post->ID, '_cdlr_usos_actuales', true );
+	if ( $usos_maximos > 0 && $usos_actuales >= $usos_maximos ) {
+		return new WP_Error( 'cdlr_cupon_agotado', 'Ese cupón ya alcanzó su máximo de usos.' );
+	}
+
+	return [
+		'post_id'        => $post->ID,
+		'flow_coupon_id' => (int) get_post_meta( $post->ID, '_cdlr_flow_coupon_id', true ),
+	];
+}
+
+/**
+ * Se llama una sola vez que la suscripción queda "activo" de verdad (no en
+ * cada intento) — ver cdlr_flow_complete_signup_for_socio().
+ */
+function cdlr_flow_incrementar_uso_cupon( $post_id ) {
+	$actuales = (int) get_post_meta( $post_id, '_cdlr_usos_actuales', true );
+	update_post_meta( $post_id, '_cdlr_usos_actuales', $actuales + 1 );
+}
+
+
+/* ---------------------------------------------------------------------
+ * Monto personalizado (agregado 2026-08-18) — "otro monto" en /membresia/.
+ * Los planes de Flow son de monto fijo, así que un aporte personalizado
+ * necesita su propio Plan creado al vuelo (/plans/create) con el monto
+ * exacto que la persona eligió, en vez de reusar amigo/colaborador/
+ * embajador.
+ * ------------------------------------------------------------------ */
+
+/**
+ * @return string|WP_Error El planId del plan recién creado.
+ */
+function cdlr_flow_crear_plan_monto_personalizado( $monto ) {
+	$monto = (int) $monto;
+	if ( $monto < 1000 ) {
+		return new WP_Error( 'cdlr_monto_invalido', 'El monto mínimo de aporte es $1.000.' );
+	}
+
+	// planId único y sin espacios (lo exige Flow) — no hace falta guardarlo
+	// en ningún otro lado más que en el propio socio (_cdlr_plan), este plan
+	// es de un solo uso, no se reusa entre socios distintos.
+	$plan_id = 'personalizado_' . time() . '_' . wp_generate_password( 6, false, false );
+
+	$result = cdlr_flow_request( 'POST', 'plans/create', [
+		'planId'   => $plan_id,
+		'name'     => 'Aporte personalizado ($' . number_format( $monto, 0, ',', '.' ) . '/mes)',
+		'amount'   => $monto,
+		'interval' => 3, // mensual, igual que los 3 planes fijos
+	] );
+
+	if ( is_wp_error( $result ) || empty( $result['planId'] ) ) {
+		return is_wp_error( $result ) ? $result : new WP_Error( 'cdlr_plan_flow', 'Flow no pudo crear el plan personalizado.' );
+	}
+
+	return $result['planId'];
 }
 
 
@@ -236,15 +490,35 @@ function cdlr_flow_handle_subscribe() {
 		return;
 	}
 
-	$name      = isset( $_POST['cdlr_name'] ) ? sanitize_text_field( wp_unslash( $_POST['cdlr_name'] ) ) : '';
-	$email     = isset( $_POST['cdlr_email'] ) ? sanitize_email( wp_unslash( $_POST['cdlr_email'] ) ) : '';
-	$plan_slug = isset( $_POST['cdlr_plan'] ) ? sanitize_key( wp_unslash( $_POST['cdlr_plan'] ) ) : '';
-	$plans     = cdlr_flow_plans();
+	$name                 = isset( $_POST['cdlr_name'] ) ? sanitize_text_field( wp_unslash( $_POST['cdlr_name'] ) ) : '';
+	$email                = isset( $_POST['cdlr_email'] ) ? sanitize_email( wp_unslash( $_POST['cdlr_email'] ) ) : '';
+	$plan_slug            = isset( $_POST['cdlr_plan'] ) ? sanitize_key( wp_unslash( $_POST['cdlr_plan'] ) ) : '';
+	$monto_personalizado  = isset( $_POST['cdlr_monto_personalizado'] ) ? (int) $_POST['cdlr_monto_personalizado'] : 0;
+	$cupon_codigo         = isset( $_POST['cdlr_cupon'] ) ? sanitize_text_field( wp_unslash( $_POST['cdlr_cupon'] ) ) : '';
+	$plans                = cdlr_flow_plans();
+	$es_personalizado     = ( 'personalizado' === $plan_slug );
 
-	if ( '' === $name || ! is_email( $email ) || ! isset( $plans[ $plan_slug ] ) ) {
+	if ( '' === $name || ! is_email( $email ) || ( ! $es_personalizado && ! isset( $plans[ $plan_slug ] ) ) ) {
 		error_log( '[CDLR Flow][debug] Falló validación de campos. name=' . wp_json_encode( $name ) . ' email=' . wp_json_encode( $email ) . ' plan_slug=' . wp_json_encode( $plan_slug ) );
 		$fail( 'Revisa tu nombre, tu email y el plan elegido.' );
 		return;
+	}
+	if ( $es_personalizado && $monto_personalizado < 1000 ) {
+		error_log( '[CDLR Flow][debug] Monto personalizado inválido: ' . wp_json_encode( $monto_personalizado ) );
+		$fail( 'Ingresa un monto de al menos $1.000.' );
+		return;
+	}
+
+	// El cupón se valida ANTES de tocar nada en Flow — así un código
+	// inválido no deja a medio camino un cliente/plan creado por nada.
+	$cupon = null;
+	if ( '' !== $cupon_codigo ) {
+		$cupon = cdlr_flow_validar_codigo_cupon( $cupon_codigo );
+		if ( is_wp_error( $cupon ) ) {
+			error_log( '[CDLR Flow][debug] Cupón inválido: ' . $cupon->get_error_message() );
+			$fail( $cupon->get_error_message() );
+			return;
+		}
 	}
 
 	$customer = cdlr_flow_get_or_create_customer( $name, $email );
@@ -254,7 +528,23 @@ function cdlr_flow_handle_subscribe() {
 		return;
 	}
 
-	update_post_meta( $customer['post_id'], '_cdlr_plan', $plan_slug );
+	if ( $es_personalizado ) {
+		$plan_id_real = cdlr_flow_crear_plan_monto_personalizado( $monto_personalizado );
+		if ( is_wp_error( $plan_id_real ) ) {
+			error_log( '[CDLR Flow][debug] Falló crear_plan_monto_personalizado: ' . $plan_id_real->get_error_message() );
+			$fail( 'No pudimos crear tu plan de aporte, intenta de nuevo en unos minutos.' );
+			return;
+		}
+		update_post_meta( $customer['post_id'], '_cdlr_plan', $plan_id_real );
+		update_post_meta( $customer['post_id'], '_cdlr_monto_personalizado', $monto_personalizado );
+	} else {
+		update_post_meta( $customer['post_id'], '_cdlr_plan', $plan_slug );
+	}
+
+	if ( $cupon ) {
+		update_post_meta( $customer['post_id'], '_cdlr_cupon_post_id', $cupon['post_id'] );
+		update_post_meta( $customer['post_id'], '_cdlr_flow_coupon_id', $cupon['flow_coupon_id'] );
+	}
 
 	// Token propio para identificar al socio en la página de retorno sin
 	// exponer el post ID (evita enumeración trivial de estados ajenos).
@@ -336,11 +626,17 @@ function cdlr_flow_complete_signup_for_socio( $socio, $flow_token ) {
 
 	$plan_slug   = get_post_meta( $socio->ID, '_cdlr_plan', true );
 	$customer_id = get_post_meta( $socio->ID, '_cdlr_flow_customer_id', true );
+	$coupon_id   = (int) get_post_meta( $socio->ID, '_cdlr_flow_coupon_id', true );
 
-	$subscription = cdlr_flow_request( 'POST', 'subscription/create', [
+	$subscription_params = [
 		'planId'     => $plan_slug,
 		'customerId' => $customer_id,
-	] );
+	];
+	if ( $coupon_id ) {
+		$subscription_params['couponId'] = $coupon_id;
+	}
+
+	$subscription = cdlr_flow_request( 'POST', 'subscription/create', $subscription_params );
 
 	if ( is_wp_error( $subscription ) || empty( $subscription['subscriptionId'] ) ) {
 		error_log( '[CDLR Flow] subscription/create falló (socio #' . $socio->ID . '): ' . wp_json_encode( $subscription ) );
@@ -353,6 +649,14 @@ function cdlr_flow_complete_signup_for_socio( $socio, $flow_token ) {
 	update_post_meta( $socio->ID, '_cdlr_flow_subscription_id', $subscription['subscriptionId'] );
 	if ( ! empty( $subscription['next_invoice_date'] ) ) {
 		update_post_meta( $socio->ID, '_cdlr_next_charge_date', $subscription['next_invoice_date'] );
+	}
+
+	// El uso del cupón se cuenta acá (suscripción real ya creada en Flow),
+	// no al validarlo en el formulario — si alguien escribe el código pero
+	// nunca termina de pagar, no debería consumir un cupo del cupón.
+	$cupon_post_id = (int) get_post_meta( $socio->ID, '_cdlr_cupon_post_id', true );
+	if ( $cupon_post_id ) {
+		cdlr_flow_incrementar_uso_cupon( $cupon_post_id );
 	}
 
 	cdlr_flow_send_confirmation_emails( $socio->ID );
@@ -377,7 +681,13 @@ function cdlr_flow_complete_signup( $return_token, $flow_token ) {
 }
 
 function cdlr_flow_send_confirmation_emails( $socio_id ) {
-	$name       = get_the_title( $socio_id );
+	// get_post_field(), no get_the_title(): el CPT cdlr_socio se crea con
+	// post_status = 'private' a propósito (sin UI en wp-admin), y
+	// get_the_title() le antepone "Privado: " a los títulos de posts
+	// privados fuera del admin — se coló en el asunto de este correo hasta
+	// que se detectó el 2026-08-18 al probar la sincronización real a
+	// Firestore (mismo bug, ver cdlr_flow_sync_credencial_firestore()).
+	$name       = get_post_field( 'post_title', $socio_id );
 	$email      = get_post_meta( $socio_id, '_cdlr_email', true );
 	$plans      = cdlr_flow_plans();
 	$plan_slug  = get_post_meta( $socio_id, '_cdlr_plan', true );
@@ -658,31 +968,60 @@ function cdlr_flow_sync_credencial_firestore( $socio_id ) {
 		return;
 	}
 
-	$plan_slug   = get_post_meta( $socio_id, '_cdlr_plan', true );
-	$estado      = get_post_meta( $socio_id, '_cdlr_status', true );
-	$next_charge = get_post_meta( $socio_id, '_cdlr_next_charge_date', true );
+	$plan_slug           = get_post_meta( $socio_id, '_cdlr_plan', true );
+	$monto_personalizado = get_post_meta( $socio_id, '_cdlr_monto_personalizado', true );
+	$estado              = get_post_meta( $socio_id, '_cdlr_status', true );
+	$next_charge         = get_post_meta( $socio_id, '_cdlr_next_charge_date', true );
+
+	// Los planes "otro monto" (agregado 2026-08-18) tienen un planId dinámico
+	// del tipo "personalizado_<timestamp>_<random>" — ese string no significa
+	// nada para la app Flutter (NivelMembresia solo conoce amigo/colaborador/
+	// embajador, y caía silenciosamente a "Amigo" con $5.000 si se le mandaba
+	// tal cual, un bug real encontrado el 2026-08-18 al ver el panel de
+	// Socios). Se normaliza acá a un valor fijo "personalizado" + el monto
+	// real por separado, para que la app lo muestre bien sin tener que
+	// entender el formato del planId dinámico.
+	$es_personalizado = str_starts_with( (string) $plan_slug, 'personalizado_' );
 
 	$fields = [
 		'email'         => [ 'stringValue' => $email ],
-		'nombre'        => [ 'stringValue' => get_the_title( $socio_id ) ],
-		'plan'          => [ 'stringValue' => $plan_slug ],
+		// get_post_field(), no get_the_title() — ver el comentario en
+		// cdlr_flow_send_confirmation_emails() más arriba.
+		'nombre'        => [ 'stringValue' => get_post_field( 'post_title', $socio_id ) ],
+		'plan'          => [ 'stringValue' => $es_personalizado ? 'personalizado' : $plan_slug ],
 		'estado'        => [ 'stringValue' => $estado ],
 		'actualizadoEn' => [ 'timestampValue' => gmdate( 'Y-m-d\TH:i:s\Z' ) ],
 	];
+	if ( $es_personalizado && $monto_personalizado ) {
+		$fields['montoPersonalizado'] = [ 'integerValue' => (int) $monto_personalizado ];
+	}
 	if ( $next_charge ) {
 		$fields['proximoCobro'] = [ 'timestampValue' => gmdate( 'Y-m-d\TH:i:s\Z', strtotime( $next_charge ) ) ];
 	}
 
 	// PATCH sobre la ruta del documento hace "upsert" (crea si no existe) en
 	// la API REST de Firestore — no hace falta un paso aparte para crear.
+	//
+	// El query string de "updateMask.fieldPaths" se arma a mano (no con
+	// add_query_arg() en un loop) — bug real encontrado el 2026-08-18 en la
+	// primera prueba contra un Firestore de verdad: add_query_arg() re-parsea
+	// la URL en cada llamada con wp_parse_str()/parse_str(), que sigue la
+	// regla histórica de PHP de convertir los puntos de un nombre de
+	// parámetro en guion bajo — el primer "updateMask.fieldPaths" quedaba
+	// bien, pero al agregar el segundo campo el primero ya se había mutado a
+	// "updateMask_fieldPaths", y Firestore rechazaba la URL entera (HTTP 400,
+	// "Unknown name updateMask_fieldPaths"). Construir el query string en un
+	// solo paso, sin re-parsearlo, evita el problema.
+	$query_mask = implode( '&', array_map(
+		fn( $campo ) => 'updateMask.fieldPaths=' . rawurlencode( $campo ),
+		array_keys( $fields )
+	) );
 	$url = sprintf(
-		'https://firestore.googleapis.com/v1/projects/%s/databases/(default)/documents/credenciales/%s',
+		'https://firestore.googleapis.com/v1/projects/%s/databases/(default)/documents/credenciales/%s?%s',
 		CDLR_FIREBASE_PROJECT_ID,
-		rawurlencode( $email )
+		rawurlencode( $email ),
+		$query_mask
 	);
-	foreach ( array_keys( $fields ) as $campo ) {
-		$url = add_query_arg( 'updateMask.fieldPaths', $campo, $url );
-	}
 
 	$response = wp_remote_request( $url, [
 		'method'  => 'PATCH',
@@ -703,3 +1042,249 @@ function cdlr_flow_sync_credencial_firestore( $socio_id ) {
 		error_log( '[CDLR Flow] Firestore devolvió error (HTTP ' . $code . ') sincronizando credencial (socio #' . $socio_id . '): ' . wp_remote_retrieve_body( $response ) );
 	}
 }
+
+
+/* ---------------------------------------------------------------------
+ * Panel admin de Cupones (app Flutter) — agregado 2026-08-18. Autenticado
+ * con el ID token de Firebase de quien esté logueado en /admin (mismo
+ * usuario que ya usa el resto del panel) — nunca con un secreto suelto
+ * embebido en el código de la app, que sería trivial de extraer de un
+ * bundle de Flutter web público.
+ * ------------------------------------------------------------------ */
+
+function cdlr_flow_base64url_decode( $data ) {
+	$resto = strlen( $data ) % 4;
+	if ( $resto ) {
+		$data .= str_repeat( '=', 4 - $resto );
+	}
+	return base64_decode( strtr( $data, '-_', '+/' ) );
+}
+
+/**
+ * Certificados públicos de Google para verificar tokens de Firebase Auth
+ * (`securetoken@system.gserviceaccount.com`) — cacheados vía transient
+ * (~1h) para no pedirlos en cada request.
+ *
+ * @return array|WP_Error Mapa kid => certificado PEM.
+ */
+function cdlr_flow_firebase_public_certs() {
+	$cached = get_transient( 'cdlr_firebase_public_certs' );
+	if ( $cached ) {
+		return $cached;
+	}
+	$response = wp_remote_get( 'https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com', [ 'timeout' => 15 ] );
+	if ( is_wp_error( $response ) ) {
+		return $response;
+	}
+	$certs = json_decode( wp_remote_retrieve_body( $response ), true );
+	if ( ! is_array( $certs ) || ! $certs ) {
+		return new WP_Error( 'cdlr_certs', 'No se pudieron obtener los certificados públicos de Firebase.' );
+	}
+	set_transient( 'cdlr_firebase_public_certs', $certs, HOUR_IN_SECONDS );
+	return $certs;
+}
+
+/**
+ * Verifica que la petición actual traiga un ID token de Firebase válido de
+ * un admin activo (mismo criterio que esAdminActivo() en firestore.rules
+ * del lado Flutter). Devuelve el uid si es válido, o un WP_Error explicando
+ * por qué no.
+ *
+ * El token viaja como parámetro del formulario (`id_token`), NO en el
+ * header "Authorization" — se probó primero con el header, pero el
+ * navegador exige mandar antes una petición OPTIONS de "preflight" en
+ * cuanto hay un header custom como Authorization, y LiteSpeed en este
+ * hosting bloquea OPTIONS con 403 a nivel de servidor (no llega ni a
+ * ejecutar PHP) — confirmado el 2026-08-18 probando contra producción.
+ * Mandarlo en el body evita el preflight por completo (POST +
+ * application/x-www-form-urlencoded cuentan como "petición simple" para
+ * CORS mientras no se agreguen headers custom).
+ *
+ * @return string|WP_Error
+ */
+function cdlr_flow_verificar_admin_request() {
+	$id_token = isset( $_POST['id_token'] ) ? sanitize_text_field( wp_unslash( $_POST['id_token'] ) ) : '';
+	if ( ! $id_token ) {
+		return new WP_Error( 'cdlr_auth_falta', 'Falta el token de autenticación.' );
+	}
+
+	$partes = explode( '.', $id_token );
+	if ( 3 !== count( $partes ) ) {
+		return new WP_Error( 'cdlr_auth_formato', 'Token con formato inválido.' );
+	}
+	list( $header_b64, $payload_b64, $signature_b64 ) = $partes;
+
+	$header    = json_decode( cdlr_flow_base64url_decode( $header_b64 ), true );
+	$payload   = json_decode( cdlr_flow_base64url_decode( $payload_b64 ), true );
+	$signature = cdlr_flow_base64url_decode( $signature_b64 );
+
+	if ( ! is_array( $header ) || ! is_array( $payload ) || empty( $header['kid'] ) ) {
+		return new WP_Error( 'cdlr_auth_formato', 'Token con formato inválido.' );
+	}
+
+	$certs = cdlr_flow_firebase_public_certs();
+	if ( is_wp_error( $certs ) ) {
+		return $certs;
+	}
+	if ( empty( $certs[ $header['kid'] ] ) ) {
+		return new WP_Error( 'cdlr_auth_kid', 'Token firmado con una llave desconocida.' );
+	}
+
+	$public_key = openssl_pkey_get_public( $certs[ $header['kid'] ] );
+	if ( ! $public_key ) {
+		return new WP_Error( 'cdlr_auth_key', 'No se pudo leer el certificado público de Firebase.' );
+	}
+
+	$signing_input = $header_b64 . '.' . $payload_b64;
+	$valido        = openssl_verify( $signing_input, $signature, $public_key, 'SHA256' );
+	if ( 1 !== $valido ) {
+		return new WP_Error( 'cdlr_auth_firma', 'La firma del token no es válida.' );
+	}
+
+	$ahora = time();
+	if ( empty( $payload['exp'] ) || $payload['exp'] < $ahora ) {
+		return new WP_Error( 'cdlr_auth_expirado', 'El token expiró, vuelve a iniciar sesión.' );
+	}
+	if ( empty( $payload['iat'] ) || $payload['iat'] > $ahora + 60 ) {
+		return new WP_Error( 'cdlr_auth_iat', 'Token con fecha de emisión inválida.' );
+	}
+	if ( empty( $payload['aud'] ) || CDLR_FIREBASE_PROJECT_ID !== $payload['aud'] ) {
+		return new WP_Error( 'cdlr_auth_aud', 'Token emitido para otro proyecto.' );
+	}
+	if ( empty( $payload['iss'] ) || 'https://securetoken.google.com/' . CDLR_FIREBASE_PROJECT_ID !== $payload['iss'] ) {
+		return new WP_Error( 'cdlr_auth_iss', 'Token con emisor inválido.' );
+	}
+	if ( empty( $payload['sub'] ) ) {
+		return new WP_Error( 'cdlr_auth_sub', 'Token sin usuario asociado.' );
+	}
+	$uid = $payload['sub'];
+
+	// El token prueba que la persona inició sesión de verdad — falta
+	// confirmar que además es un admin activo (mismo chequeo que hacen las
+	// reglas de Firestore del lado de la app, pero desde el servidor: se usa
+	// la cuenta de servicio, que no necesita pasar por esas reglas).
+	$access_token = cdlr_flow_firebase_access_token();
+	if ( is_wp_error( $access_token ) ) {
+		return $access_token;
+	}
+	$doc_url = sprintf(
+		'https://firestore.googleapis.com/v1/projects/%s/databases/(default)/documents/usuarios/%s',
+		CDLR_FIREBASE_PROJECT_ID,
+		rawurlencode( $uid )
+	);
+	$doc_response = wp_remote_get( $doc_url, [
+		'headers' => [ 'Authorization' => 'Bearer ' . $access_token ],
+		'timeout' => 15,
+	] );
+	if ( is_wp_error( $doc_response ) ) {
+		return $doc_response;
+	}
+	if ( 404 === wp_remote_retrieve_response_code( $doc_response ) ) {
+		return new WP_Error( 'cdlr_auth_no_admin', 'Ese usuario no tiene perfil de admin.' );
+	}
+	$doc    = json_decode( wp_remote_retrieve_body( $doc_response ), true );
+	$rol    = $doc['fields']['rol']['stringValue'] ?? '';
+	$activo = $doc['fields']['activo']['booleanValue'] ?? false;
+	if ( 'admin' !== $rol || ! $activo ) {
+		return new WP_Error( 'cdlr_auth_no_admin', 'Ese usuario no es un admin activo.' );
+	}
+
+	return $uid;
+}
+
+/**
+ * CORS: la app Flutter corre en un dominio distinto (Firebase Hosting), así
+ * que el navegador exige este header antes de dejar leer la respuesta a JS.
+ * Lista blanca explícita en vez de "*" por prolijidad, aunque estos
+ * endpoints ya no aceptan credenciales de navegador (el token va en el
+ * body, no en un header, justamente para no depender de un preflight
+ * OPTIONS que este hosting bloquea — ver cdlr_flow_verificar_admin_request()).
+ */
+function cdlr_cupones_cors_headers() {
+	$origenes_permitidos = [
+		'https://delaraiz-app.web.app',
+		'https://delaraiz-app.firebaseapp.com',
+		'http://localhost:8765', // flutter run -d chrome, para probar en local
+	];
+	$origen = $_SERVER['HTTP_ORIGIN'] ?? '';
+	if ( in_array( $origen, $origenes_permitidos, true ) ) {
+		header( 'Access-Control-Allow-Origin: ' . $origen );
+	}
+	header( 'Access-Control-Allow-Methods: POST' );
+	header( 'Vary: Origin' );
+}
+
+/**
+ * Corre al principio de cada endpoint de este panel: pone el header CORS y
+ * exige un admin real autenticado (corta con 401 si no lo es). El corte
+ * corto para OPTIONS queda solo como red de seguridad — al no usar headers
+ * custom, el navegador no debería mandar preflight para estas peticiones en
+ * primer lugar, pero si algún día se agrega un header custom y vuelve a
+ * dispararse, que responda 200 en vez de heredar el 401 de más abajo.
+ *
+ * @return string uid del admin, ya verificado.
+ */
+function cdlr_cupones_bootstrap() {
+	cdlr_cupones_cors_headers();
+	if ( 'OPTIONS' === ( $_SERVER['REQUEST_METHOD'] ?? '' ) ) {
+		status_header( 200 );
+		exit;
+	}
+	$auth = cdlr_flow_verificar_admin_request();
+	if ( is_wp_error( $auth ) ) {
+		wp_send_json_error( [ 'message' => $auth->get_error_message() ], 401 );
+	}
+	return $auth;
+}
+
+function cdlr_cupones_handle_listar() {
+	cdlr_cupones_bootstrap();
+	wp_send_json_success( cdlr_flow_listar_cupones() );
+}
+add_action( 'admin_post_cdlr_cupones_listar', 'cdlr_cupones_handle_listar' );
+add_action( 'admin_post_nopriv_cdlr_cupones_listar', 'cdlr_cupones_handle_listar' );
+
+function cdlr_cupones_handle_crear() {
+	cdlr_cupones_bootstrap();
+
+	$codigo       = isset( $_POST['codigo'] ) ? sanitize_text_field( wp_unslash( $_POST['codigo'] ) ) : '';
+	$percent_off  = isset( $_POST['percentOff'] ) ? (float) $_POST['percentOff'] : 0;
+	$usos_maximos = isset( $_POST['usosMaximos'] ) ? (int) $_POST['usosMaximos'] : 0;
+	$expira       = isset( $_POST['expira'] ) ? sanitize_text_field( wp_unslash( $_POST['expira'] ) ) : '';
+
+	$result = cdlr_flow_crear_cupon( $codigo, $percent_off, $usos_maximos, $expira );
+	if ( is_wp_error( $result ) ) {
+		wp_send_json_error( [ 'message' => $result->get_error_message() ], 400 );
+	}
+	wp_send_json_success( cdlr_flow_cupon_a_array( get_post( $result['post_id'] ) ) );
+}
+add_action( 'admin_post_cdlr_cupones_crear', 'cdlr_cupones_handle_crear' );
+add_action( 'admin_post_nopriv_cdlr_cupones_crear', 'cdlr_cupones_handle_crear' );
+
+function cdlr_cupones_handle_toggle() {
+	cdlr_cupones_bootstrap();
+
+	$post_id = isset( $_POST['id'] ) ? (int) $_POST['id'] : 0;
+	$activo  = isset( $_POST['activo'] ) ? filter_var( wp_unslash( $_POST['activo'] ), FILTER_VALIDATE_BOOLEAN ) : false;
+
+	$result = cdlr_flow_activar_cupon( $post_id, $activo );
+	if ( is_wp_error( $result ) ) {
+		wp_send_json_error( [ 'message' => $result->get_error_message() ], 400 );
+	}
+	wp_send_json_success( cdlr_flow_cupon_a_array( get_post( $post_id ) ) );
+}
+add_action( 'admin_post_cdlr_cupones_toggle', 'cdlr_cupones_handle_toggle' );
+add_action( 'admin_post_nopriv_cdlr_cupones_toggle', 'cdlr_cupones_handle_toggle' );
+
+function cdlr_cupones_handle_eliminar() {
+	cdlr_cupones_bootstrap();
+
+	$post_id = isset( $_POST['id'] ) ? (int) $_POST['id'] : 0;
+	$result  = cdlr_flow_eliminar_cupon( $post_id );
+	if ( is_wp_error( $result ) ) {
+		wp_send_json_error( [ 'message' => $result->get_error_message() ], 400 );
+	}
+	wp_send_json_success( [ 'id' => $post_id ] );
+}
+add_action( 'admin_post_cdlr_cupones_eliminar', 'cdlr_cupones_handle_eliminar' );
+add_action( 'admin_post_nopriv_cdlr_cupones_eliminar', 'cdlr_cupones_handle_eliminar' );

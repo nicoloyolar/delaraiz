@@ -73,11 +73,20 @@ enum EstadoModeracion {
   }
 }
 
-/// Nivel de membresía — mismos 3 planes de `/membresia/` en el sitio PHP.
+/// Nivel de membresía — los 3 planes fijos de `/membresia/` en el sitio PHP,
+/// más `personalizado` (agregado 2026-08-18) para el "otro monto" — un
+/// aporte con un monto libre, sin plan fijo asociado. El sitio PHP crea un
+/// Plan de Flow al vuelo por cada uno (`planId` dinámico tipo
+/// "personalizado_<timestamp>_<random>") y sincroniza el valor normalizado
+/// "personalizado" hacia Firestore (ver `cdlr_flow_sync_credencial_firestore()`)
+/// — antes de este fix, un planId dinámico no calzaba con ningún valor de
+/// este enum y caía silenciosamente en "Amigo" con el precio de Amigo, un
+/// bug real visto en el panel de Socios.
 enum NivelMembresia {
   amigo,
   colaborador,
-  embajador;
+  embajador,
+  personalizado;
 
   static NivelMembresia fromString(String? value) {
     return NivelMembresia.values.firstWhere(
@@ -94,14 +103,21 @@ enum NivelMembresia {
         return 'Colaborador';
       case NivelMembresia.embajador:
         return 'Embajador';
+      case NivelMembresia.personalizado:
+        return 'Personalizado';
     }
   }
 
-  /// Aporte mensual en CLP — copiado literal de `/membresia/` en el sitio
-  /// PHP (`page-membresia.php`), solo para mostrarlo en el panel admin. Si
-  /// cambian los precios ahí, hay que actualizarlos acá también (no hay
-  /// una única fuente de verdad compartida todavía entre PHP y Flutter para
-  /// este dato puntual).
+  /// Aporte mensual en CLP de los 3 planes fijos — copiado literal de
+  /// `/membresia/` en el sitio PHP (`page-membresia.php`), solo para
+  /// mostrarlo en el panel admin. Si cambian los precios ahí, hay que
+  /// actualizarlos acá también (no hay una única fuente de verdad compartida
+  /// todavía entre PHP y Flutter para este dato puntual).
+  ///
+  /// Para `personalizado` este valor NO sirve — el monto real varía por
+  /// socio y viene aparte en `CredencialModel.montoPersonalizado`. Devuelve
+  /// 0 acá como resguardo (nunca debería usarse solo, siempre hay que
+  /// preferir `montoPersonalizado` cuando el plan es personalizado).
   int get precioMensual {
     switch (this) {
       case NivelMembresia.amigo:
@@ -110,6 +126,8 @@ enum NivelMembresia {
         return 10000;
       case NivelMembresia.embajador:
         return 15000;
+      case NivelMembresia.personalizado:
+        return 0;
     }
   }
 
@@ -147,6 +165,13 @@ enum NivelMembresia {
         return [...amigo, ...colaboradorExtra];
       case NivelMembresia.embajador:
         return [...amigo, ...colaboradorExtra, ...embajadorExtra];
+      // Simplificación deliberada: un aporte personalizado siempre muestra
+      // al menos los beneficios de Amigo, sin importar el monto real. Elegir
+      // el nivel exacto según el monto (ej. $12.000 personalizado ≈
+      // Colaborador) sería más preciso, pero es una decisión de producto
+      // aparte que no se pidió resolver ahora.
+      case NivelMembresia.personalizado:
+        return amigo;
     }
   }
 }
@@ -168,6 +193,12 @@ class CredencialModel {
   final DateTime? proximoCobro;
   final DateTime? actualizadoEn;
 
+  /// Monto real mensual cuando `plan == NivelMembresia.personalizado` — el
+  /// sitio PHP solo lo manda en ese caso (ver
+  /// `cdlr_flow_sync_credencial_firestore()`). `null` para los 3 planes
+  /// fijos, que usan `plan.precioMensual` en su lugar.
+  final int? montoPersonalizado;
+
   const CredencialModel({
     required this.email,
     required this.nombre,
@@ -176,7 +207,15 @@ class CredencialModel {
     this.estadoModeracion = EstadoModeracion.sinRevisar,
     this.proximoCobro,
     this.actualizadoEn,
+    this.montoPersonalizado,
   });
+
+  /// Monto mensual real a mostrar, sin importar si el plan es fijo o
+  /// personalizado — evita que cada pantalla tenga que acordarse de este
+  /// `if` por su cuenta.
+  int get montoMensual => plan == NivelMembresia.personalizado
+      ? (montoPersonalizado ?? 0)
+      : plan.precioMensual;
 
   factory CredencialModel.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data() ?? <String, dynamic>{};
@@ -188,6 +227,7 @@ class CredencialModel {
       estadoModeracion: EstadoModeracion.fromString(data['estadoModeracion'] as String?),
       proximoCobro: (data['proximoCobro'] as Timestamp?)?.toDate(),
       actualizadoEn: (data['actualizadoEn'] as Timestamp?)?.toDate(),
+      montoPersonalizado: (data['montoPersonalizado'] as num?)?.toInt(),
     );
   }
 }

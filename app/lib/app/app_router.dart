@@ -15,6 +15,7 @@ import '../screens/admin/financiamiento/financiamiento_list_screen.dart';
 import '../screens/admin/login_screen.dart';
 import '../screens/admin/proyectos/proyecto_detail_screen.dart';
 import '../screens/admin/proyectos/proyectos_list_screen.dart';
+import '../screens/admin/cupones/cupones_list_screen.dart';
 import '../screens/admin/resumen_screen.dart';
 import '../screens/admin/socios/socios_list_screen.dart';
 import '../screens/public/credencial_screen.dart';
@@ -32,6 +33,7 @@ AdminRoute _adminRouteDeUbicacion(String location) {
   if (location.startsWith('/admin/equipo')) return AdminRoute.equipo;
   if (location.startsWith('/admin/financiamiento')) return AdminRoute.financiamiento;
   if (location.startsWith('/admin/socios')) return AdminRoute.socios;
+  if (location.startsWith('/admin/cupones')) return AdminRoute.cupones;
   if (location.startsWith('/admin/documentos')) return AdminRoute.documentos;
   return AdminRoute.resumen;
 }
@@ -53,12 +55,11 @@ class _AuthChangeNotifier extends ChangeNotifier {
   }
 }
 
-// TEMPORAL: mientras no exista una cuenta de Firebase Auth creada, se
-// omite la protección de las rutas `/admin/*` para poder revisar el panel
-// sin iniciar sesión. Poner en `false` en cuanto exista al menos un
-// usuario (ver README, sección "Puesta en marcha") — dejarlo en `true` en
-// producción expondría el panel administrativo sin autenticación.
-const bool _omitirAutenticacionTemporalmente = true;
+// Ya existe una cuenta admin real (nicolas.iloyolar@gmail.com, Firebase Auth
+// + documento `usuarios/{uid}` con rol admin, creados 2026-08-18 al conectar
+// el proyecto real `delaraiz-app`) — el bypass queda apagado. `/admin/*`
+// ahora exige sesión real, como corresponde en producción.
+const bool _omitirAutenticacionTemporalmente = false;
 
 /// Rutas de la aplicación:
 /// - `/` : formulario público de postulación (sin autenticación).
@@ -162,6 +163,11 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/admin/socios',
             pageBuilder: (context, state) =>
                 const NoTransitionPage(child: SociosListScreen()),
+          ),
+          GoRoute(
+            path: '/admin/cupones',
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: CuponesListScreen()),
           ),
           GoRoute(
             path: '/admin/documentos',

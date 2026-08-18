@@ -6,7 +6,7 @@ import '../app/app_colors.dart';
 import '../providers/providers.dart';
 
 /// Secciones disponibles en la navegación del panel administrativo.
-enum AdminRoute { resumen, proyectos, espacios, equipo, financiamiento, socios, documentos, configuracion }
+enum AdminRoute { resumen, proyectos, espacios, equipo, financiamiento, socios, cupones, documentos, configuracion }
 
 /// Layout compartido del panel admin: sidebar de navegación + contenido.
 /// Todas las pantallas de `/admin/*` se envuelven en este shell para que
@@ -134,6 +134,12 @@ class _Sidebar extends ConsumerWidget {
                   label: 'Socios',
                   activo: currentRoute == AdminRoute.socios,
                   onTap: () => context.go('/admin/socios'),
+                ),
+                _NavItem(
+                  icon: Icons.sell_outlined,
+                  label: 'Cupones',
+                  activo: currentRoute == AdminRoute.cupones,
+                  onTap: () => context.go('/admin/cupones'),
                 ),
                 _NavItem(
                   icon: Icons.folder_copy_outlined,

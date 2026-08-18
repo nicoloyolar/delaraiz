@@ -26,6 +26,11 @@ dependencies:
   file_picker: ^8.1.2
   url_launcher: ^6.3.0
 
+  # --- Panel de Cupones: llama a un endpoint propio en el sitio PHP (no
+  # Firestore) porque la creación real del cupón pasa por la API de Flow,
+  # que solo el sitio PHP tiene credenciales para llamar (ver inc/flow.php).
+  http: ^1.2.2
+
   # --- Utilidades ---
   intl: ^0.19.0
   uuid: ^4.5.1

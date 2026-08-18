@@ -118,7 +118,7 @@ class SociosListScreen extends ConsumerWidget {
                     return _FilaSocio(
                       socio: socio,
                       iniciales: _iniciales(socio.nombre),
-                      montoFormateado: _formatoPesos(socio.plan.precioMensual),
+                      montoFormateado: _formatoPesos(socio.montoMensual),
                       onCambiarEstado: (nuevoEstado, {requiereConfirmacion = false}) =>
                           _cambiarEstado(context, ref, socio, nuevoEstado,
                               requiereConfirmacion: requiereConfirmacion),
