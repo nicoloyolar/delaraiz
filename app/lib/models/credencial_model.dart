@@ -35,6 +35,44 @@ enum EstadoCredencial {
   }
 }
 
+/// Estado de moderación manual de un socio — capa aparte del [EstadoCredencial]
+/// real (que viene automático desde Flow vía el sitio PHP). Agregado
+/// 2026-08-14 para el mantenedor de Socios del panel admin: casos
+/// excepcionales que el cobro automático no cubre (un aporte hecho por
+/// fuera de Flow, bloquear a alguien por decisión de la directiva, etc.).
+///
+/// Nunca lo escribe el sitio PHP — solo el panel admin de esta app (ver
+/// `SociosAdminService` y `firestore.rules`, que restringe la escritura del
+/// cliente a únicamente estos 2 campos). Por eso conviven sin pisarse: la
+/// sincronización de Flow hace `PATCH` solo de los campos que ella controla
+/// (`estado`, `plan`, `proximoCobro`...), nunca toca `estadoModeracion`.
+enum EstadoModeracion {
+  sinRevisar,
+  aprobado,
+  rechazado,
+  bloqueado;
+
+  static EstadoModeracion fromString(String? value) {
+    return EstadoModeracion.values.firstWhere(
+      (e) => e.name == value,
+      orElse: () => EstadoModeracion.sinRevisar,
+    );
+  }
+
+  String get label {
+    switch (this) {
+      case EstadoModeracion.sinRevisar:
+        return 'Sin revisar';
+      case EstadoModeracion.aprobado:
+        return 'Aprobado';
+      case EstadoModeracion.rechazado:
+        return 'Rechazado';
+      case EstadoModeracion.bloqueado:
+        return 'Bloqueado';
+    }
+  }
+}
+
 /// Nivel de membresía — mismos 3 planes de `/membresia/` en el sitio PHP.
 enum NivelMembresia {
   amigo,
@@ -56,6 +94,22 @@ enum NivelMembresia {
         return 'Colaborador';
       case NivelMembresia.embajador:
         return 'Embajador';
+    }
+  }
+
+  /// Aporte mensual en CLP — copiado literal de `/membresia/` en el sitio
+  /// PHP (`page-membresia.php`), solo para mostrarlo en el panel admin. Si
+  /// cambian los precios ahí, hay que actualizarlos acá también (no hay
+  /// una única fuente de verdad compartida todavía entre PHP y Flutter para
+  /// este dato puntual).
+  int get precioMensual {
+    switch (this) {
+      case NivelMembresia.amigo:
+        return 5000;
+      case NivelMembresia.colaborador:
+        return 10000;
+      case NivelMembresia.embajador:
+        return 15000;
     }
   }
 
@@ -110,6 +164,7 @@ class CredencialModel {
   final String nombre;
   final NivelMembresia plan;
   final EstadoCredencial estado;
+  final EstadoModeracion estadoModeracion;
   final DateTime? proximoCobro;
   final DateTime? actualizadoEn;
 
@@ -118,6 +173,7 @@ class CredencialModel {
     required this.nombre,
     required this.plan,
     required this.estado,
+    this.estadoModeracion = EstadoModeracion.sinRevisar,
     this.proximoCobro,
     this.actualizadoEn,
   });
@@ -129,6 +185,7 @@ class CredencialModel {
       nombre: data['nombre'] as String? ?? '',
       plan: NivelMembresia.fromString(data['plan'] as String?),
       estado: EstadoCredencial.fromString(data['estado'] as String?),
+      estadoModeracion: EstadoModeracion.fromString(data['estadoModeracion'] as String?),
       proximoCobro: (data['proximoCobro'] as Timestamp?)?.toDate(),
       actualizadoEn: (data['actualizadoEn'] as Timestamp?)?.toDate(),
     );

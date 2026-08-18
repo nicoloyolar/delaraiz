@@ -94,8 +94,24 @@ service cloud.firestore {
     // "allow write: if false" para cualquier cliente (app o navegador) es
     // correcto y no bloquea la sincronización real.
     match /credenciales/{email} {
-      allow read: if request.auth != null && request.auth.token.email.lower() == email;
-      allow write: if false;
+      // Lectura: el propio socio ve su credencial (self-service, ver
+      // `credencial_screen.dart`), o cualquier admin activo ve cualquiera —
+      // agregado 2026-08-14 para el mantenedor de Socios del panel admin
+      // (`socios_list_screen.dart`), que necesita listar la colección
+      // completa, no un documento a la vez.
+      allow read: if (request.auth != null && request.auth.token.email.lower() == email)
+        || esAdminActivo();
+
+      // Escritura: sigue bloqueada para los campos reales de la suscripción
+      // (`estado`, `plan`, `proximoCobro`, etc.) — esos solo los toca el
+      // sitio PHP mediante una cuenta de servicio, que no pasa por estas
+      // reglas en absoluto. La ÚNICA excepción es la capa de moderación
+      // manual (aprobar/rechazar/bloquear un socio desde el panel admin):
+      // un admin activo puede actualizar exclusivamente esos 2 campos, en
+      // un documento que ya existe (nunca crear uno nuevo desde acá).
+      allow update: if esAdminActivo()
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['estadoModeracion', 'estadoModeracionActualizadoEn']);
     }
   }
 }

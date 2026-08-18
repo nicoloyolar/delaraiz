@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../models/componente_model.dart';
+import '../models/credencial_model.dart';
 import '../models/postulacion_fondo_model.dart';
 import '../models/proyecto_model.dart';
 import 'app_colors.dart';
@@ -51,6 +52,36 @@ class EstadoColors {
         return AppColors.accent;
       case EstadoFondo.rendido:
         return AppColors.seleccionada;
+    }
+  }
+
+  /// Estado real de la suscripción (viene automático desde Flow).
+  static Color credencial(EstadoCredencial estado) {
+    switch (estado) {
+      case EstadoCredencial.activo:
+        return AppColors.seleccionada;
+      case EstadoCredencial.pendiente:
+        return AppColors.pendiente;
+      case EstadoCredencial.moroso:
+        return AppColors.pendiente;
+      case EstadoCredencial.cancelado:
+        return AppColors.textMuted;
+      case EstadoCredencial.rechazado:
+        return AppColors.rechazada;
+    }
+  }
+
+  /// Capa de moderación manual del panel admin (mantenedor de Socios).
+  static Color moderacion(EstadoModeracion estado) {
+    switch (estado) {
+      case EstadoModeracion.sinRevisar:
+        return AppColors.textMuted;
+      case EstadoModeracion.aprobado:
+        return AppColors.seleccionada;
+      case EstadoModeracion.rechazado:
+        return AppColors.rechazada;
+      case EstadoModeracion.bloqueado:
+        return AppColors.rechazada;
     }
   }
 }

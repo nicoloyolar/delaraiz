@@ -4,25 +4,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../app/app_colors.dart';
 import '../../../models/persona_model.dart';
 import '../../../providers/providers.dart';
-import '../../../widgets/admin_shell.dart';
 import 'persona_form_dialog.dart';
 
 /// Directorio de Equipo y Voluntarios de la Corporación. Ruta protegida
 /// `/admin/equipo`.
-class EquipoListScreen extends StatelessWidget {
+///
+/// El `AdminShell` (sidebar) lo provee el `ShellRoute` en `app_router.dart`.
+class EquipoListScreen extends ConsumerWidget {
   const EquipoListScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const AdminShell(
-      currentRoute: AdminRoute.equipo,
-      child: _ContenidoEquipo(),
-    );
-  }
-}
-
-class _ContenidoEquipo extends ConsumerWidget {
-  const _ContenidoEquipo();
 
   Future<void> _confirmarEliminar(BuildContext context, WidgetRef ref, PersonaModel persona) async {
     final confirmar = await showDialog<bool>(

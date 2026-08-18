@@ -21,6 +21,7 @@ import '../services/espacio_service.dart';
 import '../services/fondo_service.dart';
 import '../services/persona_service.dart';
 import '../services/proyecto_service.dart';
+import '../services/socios_admin_service.dart';
 
 /// --- Servicios (singletons de la app) ---
 
@@ -39,6 +40,8 @@ final personaServiceProvider = Provider<PersonaService>((ref) => PersonaService(
 final fondoServiceProvider = Provider<FondoService>((ref) => FondoService());
 
 final credencialServiceProvider = Provider<CredencialService>((ref) => CredencialService());
+
+final sociosAdminServiceProvider = Provider<SociosAdminService>((ref) => SociosAdminService());
 
 /// --- Autenticación ---
 
@@ -62,6 +65,12 @@ final credencialActualProvider = StreamProvider.autoDispose<CredencialModel?>((r
     return Stream.value(null);
   }
   return ref.watch(credencialServiceProvider).streamCredencial(user!.email!);
+});
+
+/// --- Mantenedor de Socios (panel admin, agregado 2026-08-14) ---
+
+final sociosStreamProvider = StreamProvider.autoDispose<List<CredencialModel>>((ref) {
+  return ref.watch(sociosAdminServiceProvider).streamSocios();
 });
 
 /// --- Proyectos ---

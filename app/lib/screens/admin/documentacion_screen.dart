@@ -5,27 +5,16 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../app/app_colors.dart';
 import '../../models/documento_model.dart';
 import '../../providers/providers.dart';
-import '../../widgets/admin_shell.dart';
 import '../../widgets/documento_card.dart';
 import '../../widgets/subir_documento_dialog.dart';
 
 /// Pantalla de gestión de documentación institucional de la Corporación
 /// de La Raíz (estatutos, actas, contratos, informes) — independiente
 /// de las postulaciones de bandas. Ruta protegida `/admin/documentos`.
-class DocumentacionScreen extends StatelessWidget {
+///
+/// El `AdminShell` (sidebar) lo provee el `ShellRoute` en `app_router.dart`.
+class DocumentacionScreen extends ConsumerWidget {
   const DocumentacionScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const AdminShell(
-      currentRoute: AdminRoute.documentos,
-      child: _ContenidoDocumentacion(),
-    );
-  }
-}
-
-class _ContenidoDocumentacion extends ConsumerWidget {
-  const _ContenidoDocumentacion();
 
   Future<void> _abrirArchivo(BuildContext context, String url) async {
     final uri = Uri.tryParse(url);

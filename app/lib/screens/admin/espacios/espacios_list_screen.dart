@@ -3,26 +3,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../providers/providers.dart';
-import '../../../widgets/admin_shell.dart';
 import '../../../widgets/espacio_card.dart';
 import 'espacio_form_dialog.dart';
 
 /// Listado de Espacios recuperados o en gestión por la Corporación.
 /// Ruta protegida `/admin/espacios`.
-class EspaciosListScreen extends StatelessWidget {
+///
+/// El `AdminShell` (sidebar) lo provee el `ShellRoute` en `app_router.dart`.
+class EspaciosListScreen extends ConsumerWidget {
   const EspaciosListScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const AdminShell(
-      currentRoute: AdminRoute.espacios,
-      child: _ContenidoEspacios(),
-    );
-  }
-}
-
-class _ContenidoEspacios extends ConsumerWidget {
-  const _ContenidoEspacios();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

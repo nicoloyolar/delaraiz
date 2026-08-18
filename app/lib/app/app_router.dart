@@ -16,8 +16,25 @@ import '../screens/admin/login_screen.dart';
 import '../screens/admin/proyectos/proyecto_detail_screen.dart';
 import '../screens/admin/proyectos/proyectos_list_screen.dart';
 import '../screens/admin/resumen_screen.dart';
+import '../screens/admin/socios/socios_list_screen.dart';
 import '../screens/public/credencial_screen.dart';
 import '../screens/public/postulacion_form_screen.dart';
+import '../widgets/admin_shell.dart';
+
+/// A qué `AdminRoute` (para resaltar el ítem activo del sidebar)
+/// corresponde una ubicación de `/admin/*`. Vive acá y no en cada
+/// pantalla porque, desde el `ShellRoute` de abajo, es el propio router
+/// el que sabe en qué sección está — las pantallas ya no arman su propio
+/// `AdminShell`.
+AdminRoute _adminRouteDeUbicacion(String location) {
+  if (location.startsWith('/admin/proyectos')) return AdminRoute.proyectos;
+  if (location.startsWith('/admin/espacios')) return AdminRoute.espacios;
+  if (location.startsWith('/admin/equipo')) return AdminRoute.equipo;
+  if (location.startsWith('/admin/financiamiento')) return AdminRoute.financiamiento;
+  if (location.startsWith('/admin/socios')) return AdminRoute.socios;
+  if (location.startsWith('/admin/documentos')) return AdminRoute.documentos;
+  return AdminRoute.resumen;
+}
 
 /// Adapta un `Stream` (en este caso, los cambios de sesión de Firebase
 /// Auth) a un `Listenable`, que es lo que `go_router` necesita para
@@ -53,6 +70,8 @@ const bool _omitirAutenticacionTemporalmente = true;
 /// - `/admin/espacios`, `/admin/espacios/:id` : Espacios recuperados.
 /// - `/admin/equipo` : directorio de Equipo y Voluntarios.
 /// - `/admin/financiamiento`, `/admin/financiamiento/:id` : Fondos.
+/// - `/admin/socios` : mantenedor de Socios (aportes vía Flow, moderación
+///   manual — agregado 2026-08-14).
 /// - `/admin/documentos` : documentación institucional.
 /// - `/admin/banda/:id` : detalle de una postulación de banda.
 final routerProvider = Provider<GoRouter>((ref) {
@@ -98,14 +117,62 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/admin/login',
         builder: (context, state) => const AdminLoginScreen(),
       ),
-      GoRoute(
-        path: '/admin',
-        builder: (context, state) => const ResumenScreen(),
+      // Las 6 secciones "de lista" del panel comparten el mismo `AdminShell`
+      // (sidebar) como widget persistente — antes cada pantalla armaba su
+      // propia copia del sidebar, así que `go_router` la reconstruía entera
+      // (con animación de transición de página) cada vez que se navegaba
+      // entre secciones, y eso era el "salto" al cambiar de pantalla.
+      // `NoTransitionPage` además saca la animación de deslizamiento del
+      // contenido interno, para que el cambio se sienta instantáneo, como
+      // cambiar de tab — no como abrir una página nueva.
+      ShellRoute(
+        builder: (context, state, child) {
+          return AdminShell(
+            currentRoute: _adminRouteDeUbicacion(state.matchedLocation),
+            child: child,
+          );
+        },
+        routes: [
+          GoRoute(
+            path: '/admin',
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: ResumenScreen()),
+          ),
+          GoRoute(
+            path: '/admin/proyectos',
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: ProyectosListScreen()),
+          ),
+          GoRoute(
+            path: '/admin/espacios',
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: EspaciosListScreen()),
+          ),
+          GoRoute(
+            path: '/admin/equipo',
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: EquipoListScreen()),
+          ),
+          GoRoute(
+            path: '/admin/financiamiento',
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: FinanciamientoListScreen()),
+          ),
+          GoRoute(
+            path: '/admin/socios',
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: SociosListScreen()),
+          ),
+          GoRoute(
+            path: '/admin/documentos',
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: DocumentacionScreen()),
+          ),
+        ],
       ),
-      GoRoute(
-        path: '/admin/proyectos',
-        builder: (context, state) => const ProyectosListScreen(),
-      ),
+      // Las vistas de detalle SÍ quedan fuera del shell, a propósito: son
+      // pantallas de "profundizar" (drill-down) a pantalla completa, sin
+      // sidebar — igual que antes, no es parte del bug reportado.
       GoRoute(
         path: '/admin/proyectos/:id',
         builder: (context, state) {
@@ -114,23 +181,11 @@ final routerProvider = Provider<GoRouter>((ref) {
         },
       ),
       GoRoute(
-        path: '/admin/espacios',
-        builder: (context, state) => const EspaciosListScreen(),
-      ),
-      GoRoute(
         path: '/admin/espacios/:id',
         builder: (context, state) {
           final id = state.pathParameters['id']!;
           return EspacioDetailScreen(espacioId: id);
         },
-      ),
-      GoRoute(
-        path: '/admin/equipo',
-        builder: (context, state) => const EquipoListScreen(),
-      ),
-      GoRoute(
-        path: '/admin/financiamiento',
-        builder: (context, state) => const FinanciamientoListScreen(),
       ),
       GoRoute(
         path: '/admin/financiamiento/:id',
@@ -145,10 +200,6 @@ final routerProvider = Provider<GoRouter>((ref) {
           final id = state.pathParameters['id']!;
           return BandaDetailScreen(bandaId: id);
         },
-      ),
-      GoRoute(
-        path: '/admin/documentos',
-        builder: (context, state) => const DocumentacionScreen(),
       ),
     ],
   );

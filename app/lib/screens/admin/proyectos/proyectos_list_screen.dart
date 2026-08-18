@@ -3,27 +3,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../providers/providers.dart';
-import '../../../widgets/admin_shell.dart';
 import '../../../widgets/proyecto_card.dart';
 import 'proyecto_form_dialog.dart';
 
 /// Listado de todos los Proyectos de la Corporación — la puerta de
 /// entrada a la gestión de cada iniciativa (La Grúa del Rock, Festival de
 /// Lagunas, etc.). Ruta protegida `/admin/proyectos`.
-class ProyectosListScreen extends StatelessWidget {
+///
+/// El `AdminShell` (sidebar) lo provee el `ShellRoute` en `app_router.dart`.
+class ProyectosListScreen extends ConsumerWidget {
   const ProyectosListScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const AdminShell(
-      currentRoute: AdminRoute.proyectos,
-      child: _ContenidoProyectos(),
-    );
-  }
-}
-
-class _ContenidoProyectos extends ConsumerWidget {
-  const _ContenidoProyectos();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

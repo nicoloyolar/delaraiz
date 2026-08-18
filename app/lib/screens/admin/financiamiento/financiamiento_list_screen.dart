@@ -3,26 +3,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../providers/providers.dart';
-import '../../../widgets/admin_shell.dart';
 import '../../../widgets/fondo_card.dart';
 import 'fondo_form_dialog.dart';
 
 /// Listado global de postulaciones a fondos de financiamiento, de todos
 /// los proyectos de la Corporación. Ruta protegida `/admin/financiamiento`.
-class FinanciamientoListScreen extends StatelessWidget {
+///
+/// El `AdminShell` (sidebar) lo provee el `ShellRoute` en `app_router.dart`.
+class FinanciamientoListScreen extends ConsumerWidget {
   const FinanciamientoListScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const AdminShell(
-      currentRoute: AdminRoute.financiamiento,
-      child: _ContenidoFinanciamiento(),
-    );
-  }
-}
-
-class _ContenidoFinanciamiento extends ConsumerWidget {
-  const _ContenidoFinanciamiento();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

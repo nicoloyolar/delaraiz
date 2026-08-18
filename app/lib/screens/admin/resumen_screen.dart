@@ -7,7 +7,6 @@ import '../../app/estado_colors.dart';
 import '../../models/postulacion_fondo_model.dart';
 import '../../models/proyecto_model.dart';
 import '../../providers/providers.dart';
-import '../../widgets/admin_shell.dart';
 import '../../widgets/pill.dart';
 import '../../widgets/stat_card.dart';
 
@@ -15,20 +14,13 @@ import '../../widgets/stat_card.dart';
 /// módulos (proyectos, bandas, espacios, equipo, financiamiento) para
 /// tener una vista rápida del estado general de la Corporación sin entrar
 /// a cada sección. Ruta protegida `/admin`.
-class ResumenScreen extends StatelessWidget {
+///
+/// El `AdminShell` (sidebar) ya no se arma acá — lo provee el `ShellRoute`
+/// en `app_router.dart`, como widget persistente compartido por las 6
+/// secciones de lista del panel (evita que el sidebar se reconstruya al
+/// navegar entre secciones).
+class ResumenScreen extends ConsumerWidget {
   const ResumenScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const AdminShell(
-      currentRoute: AdminRoute.resumen,
-      child: _ContenidoResumen(),
-    );
-  }
-}
-
-class _ContenidoResumen extends ConsumerWidget {
-  const _ContenidoResumen();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
