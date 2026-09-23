@@ -850,6 +850,81 @@ function cdlr_flow_reconcile_pending() {
 
 
 /* ---------------------------------------------------------------------
+ * Cron: detecta cancelaciones hechas directo en el dashboard de Flow.
+ *
+ * Encontrado en la auditoría de pre-lanzamiento de base de datos
+ * (2026-09-23): el webhook (cdlr_flow_handle_webhook) solo distingue
+ * "cobro exitoso" vs. "cobro fallido" — no hay ningún caso para
+ * "suscripción cancelada". Si alguien cancela desde dashboard.flow.cl (el
+ * procedimiento que se ha usado siempre en este proyecto para las pruebas,
+ * ver PROYECTO.md sección 5.1/9.10), el sitio NUNCA se entera: el socio
+ * seguía apareciendo "activo" para siempre en el panel de Socios y en su
+ * propia credencial, aunque ya no le cobraran nada.
+ *
+ * No se resuelve con un webhook porque Flow probablemente no manda ningún
+ * aviso por una cancelación manual desde su propio dashboard (el
+ * urlCallback de cada Plan está pensado para eventos de cobro, no acciones
+ * administrativas) — no hay forma de confirmar esto sin documentación ni
+ * un caso real, así que se optó por lo mismo que ya usa
+ * cdlr_flow_reconcile_pending(): un cron diario que le pregunta a Flow
+ * directamente por cada socio activo/moroso, en vez de esperar a que Flow
+ * avise solo.
+ * ------------------------------------------------------------------ */
+
+add_action( 'wp', function () {
+	if ( ! wp_next_scheduled( 'cdlr_flow_reconcile_activas_event' ) ) {
+		wp_schedule_event( time(), 'daily', 'cdlr_flow_reconcile_activas_event' );
+	}
+} );
+
+add_action( 'cdlr_flow_reconcile_activas_event', 'cdlr_flow_reconcile_activas' );
+
+function cdlr_flow_reconcile_activas() {
+	$posts = get_posts( [
+		'post_type'      => 'cdlr_socio',
+		'posts_per_page' => -1,
+		'post_status'    => 'any',
+		'meta_query'     => [
+			[
+				'key'     => '_cdlr_status',
+				'value'   => [ 'activo', 'moroso' ],
+				'compare' => 'IN',
+			],
+		],
+	] );
+
+	foreach ( $posts as $post ) {
+		$subscription_id = get_post_meta( $post->ID, '_cdlr_flow_subscription_id', true );
+		if ( ! $subscription_id ) {
+			continue;
+		}
+
+		$subscription = cdlr_flow_request( 'GET', 'subscription/get', [ 'subscriptionId' => $subscription_id ] );
+		if ( is_wp_error( $subscription ) ) {
+			continue; // Error transitorio de red/API — se reintenta mañana, no se asume cancelado por esto.
+		}
+
+		// `subscription_end` con una fecha real es la señal más confiable de
+		// que Flow considera la suscripción terminada (visto en la respuesta
+		// real de subscription/get: null mientras está vigente). `status`
+		// distinto de 1 (activo) se chequea como respaldo — no hay
+		// documentación pública de Flow que confirme todos los valores
+		// posibles, así que se loguea la respuesta completa la primera vez
+		// que se detecta, igual que se hizo con otros campos inciertos de
+		// esta misma API (ver cdlr_flow_card_registered()).
+		$cancelada = ! empty( $subscription['subscription_end'] )
+			|| ( isset( $subscription['status'] ) && 1 !== (int) $subscription['status'] );
+
+		if ( $cancelada ) {
+			error_log( '[CDLR Flow] Cancelación detectada vía reconciliación diaria (socio #' . $post->ID . '): ' . wp_json_encode( $subscription ) );
+			update_post_meta( $post->ID, '_cdlr_status', 'cancelado' );
+			cdlr_flow_sync_credencial_firestore( $post->ID );
+		}
+	}
+}
+
+
+/* ---------------------------------------------------------------------
  * Credencial digital del socio (agregado 2026-08-12) — sincroniza el
  * estado real de la membresía hacia Firestore, para que la app Flutter
  * pueda mostrarlo en tiempo real sin consultarle nada al sitio PHP
