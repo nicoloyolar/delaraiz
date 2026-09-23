@@ -7,10 +7,12 @@ import '../models/banda_model.dart';
 import '../models/bitacora_entry_model.dart';
 import '../models/componente_model.dart';
 import '../models/credencial_model.dart';
+import '../models/cupon_acceso_model.dart';
 import '../models/cupon_model.dart';
 import '../models/documento_model.dart';
 import '../models/espacio_model.dart';
 import '../models/evento_model.dart';
+import '../models/local_model.dart';
 import '../models/persona_model.dart';
 import '../models/postulacion_fondo_model.dart';
 import '../models/proyecto_miembro_model.dart';
@@ -19,11 +21,13 @@ import '../models/rendicion_model.dart';
 import '../services/auth_service.dart';
 import '../services/banda_service.dart';
 import '../services/credencial_service.dart';
+import '../services/cupon_acceso_service.dart';
 import '../services/cupones_service.dart';
 import '../services/documento_service.dart';
 import '../services/espacio_service.dart';
 import '../services/evento_service.dart';
 import '../services/fondo_service.dart';
+import '../services/local_service.dart';
 import '../services/persona_service.dart';
 import '../services/proyecto_service.dart';
 import '../services/socios_admin_service.dart';
@@ -114,6 +118,31 @@ final sociosStreamProvider = StreamProvider.autoDispose<List<CredencialModel>>((
 /// llama `ref.invalidate(cuponesListProvider)` para refrescar la lista.
 final cuponesListProvider = FutureProvider.autoDispose<List<CuponModel>>((ref) {
   return ref.watch(cuponesServiceProvider).listar();
+});
+
+/// --- Locales adheridos + cupón de acceso QR de Embajador (agregado 2026-09-23) ---
+
+final localServiceProvider = Provider<LocalService>((ref) => LocalService());
+
+final cuponAccesoServiceProvider = Provider<CuponAccesoService>((ref) => CuponAccesoService());
+
+final localesTodosProvider = StreamProvider.autoDispose<List<LocalModel>>((ref) {
+  return ref.watch(localServiceProvider).streamTodos();
+});
+
+final localesActivosProvider = StreamProvider.autoDispose<List<LocalModel>>((ref) {
+  return ref.watch(localServiceProvider).streamActivos();
+});
+
+/// El cupón vigente del socio autenticado actualmente, o `null` — mismo
+/// criterio que `credencialActualProvider` (se recalcula solo con la
+/// sesión, no hace falta pasar el email a mano).
+final cuponVigentePropioProvider = StreamProvider.autoDispose<CuponAccesoModel?>((ref) {
+  final user = ref.watch(authStateProvider).valueOrNull;
+  if (user?.email == null) {
+    return Stream.value(null);
+  }
+  return ref.watch(cuponAccesoServiceProvider).streamVigentePropio(user!.email!);
 });
 
 /// --- Proyectos ---

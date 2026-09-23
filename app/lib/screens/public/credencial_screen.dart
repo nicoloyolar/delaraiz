@@ -9,6 +9,7 @@ import '../../models/credencial_model.dart';
 import '../../providers/providers.dart';
 import '../../utils/validators.dart';
 import '../../widgets/pill.dart';
+import 'cupon_acceso_widget.dart';
 
 /// Credencial digital de socio — agregado 2026-08-12.
 ///
@@ -367,6 +368,7 @@ class _TarjetaCredencial extends ConsumerWidget {
                   ),
                 ),
               ),
+              CuponAccesoSection(credencial: credencial),
               const SizedBox(height: 16),
               TextButton(
                 onPressed: () => ref.read(authServiceProvider).signOut(),

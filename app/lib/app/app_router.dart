@@ -17,10 +17,12 @@ import '../screens/admin/proyectos/proyecto_detail_screen.dart';
 import '../screens/admin/proyectos/proyectos_list_screen.dart';
 import '../screens/admin/agenda/agenda_list_screen.dart';
 import '../screens/admin/cupones/cupones_list_screen.dart';
+import '../screens/admin/locales/locales_list_screen.dart';
 import '../screens/admin/resumen_screen.dart';
 import '../screens/admin/socios/socios_list_screen.dart';
 import '../screens/public/credencial_screen.dart';
 import '../screens/public/postulacion_form_screen.dart';
+import '../screens/public/validar_cupon_screen.dart';
 import '../widgets/admin_shell.dart';
 
 /// A qué `AdminRoute` (para resaltar el ítem activo del sidebar)
@@ -36,6 +38,7 @@ AdminRoute _adminRouteDeUbicacion(String location) {
   if (location.startsWith('/admin/financiamiento')) return AdminRoute.financiamiento;
   if (location.startsWith('/admin/socios')) return AdminRoute.socios;
   if (location.startsWith('/admin/cupones')) return AdminRoute.cupones;
+  if (location.startsWith('/admin/locales')) return AdminRoute.locales;
   if (location.startsWith('/admin/documentos')) return AdminRoute.documentos;
   return AdminRoute.resumen;
 }
@@ -116,6 +119,21 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/credencial',
         builder: (context, state) => const CredencialScreen(),
       ),
+      // Pantalla pública de validación del cupón de acceso QR de Embajador
+      // (agregada 2026-09-23) — sin login: quien recibe a los socios en la
+      // puerta de un local no tiene cuenta de Firebase. `localId` viene en
+      // la URL (un link propio por local, ver LocalesListScreen); `codigo`
+      // es opcional en la query string — si el QR ya lo trae (escaneado con
+      // la cámara nativa del celular, no una cámara dentro de esta app), el
+      // campo llega prellenado.
+      GoRoute(
+        path: '/validar/:localId',
+        builder: (context, state) {
+          final localId = state.pathParameters['localId']!;
+          final codigoInicial = state.uri.queryParameters['codigo'];
+          return ValidarCuponScreen(localId: localId, codigoInicial: codigoInicial);
+        },
+      ),
       GoRoute(
         path: '/admin/login',
         builder: (context, state) => const AdminLoginScreen(),
@@ -175,6 +193,11 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/admin/cupones',
             pageBuilder: (context, state) =>
                 const NoTransitionPage(child: CuponesListScreen()),
+          ),
+          GoRoute(
+            path: '/admin/locales',
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: LocalesListScreen()),
           ),
           GoRoute(
             path: '/admin/documentos',

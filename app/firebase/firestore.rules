@@ -121,5 +121,41 @@ service cloud.firestore {
         && request.resource.data.diff(resource.data).affectedKeys()
              .hasOnly(['estadoModeracion', 'estadoModeracionActualizadoEn']);
     }
+
+    // --- Locales adheridos al beneficio de acceso de Embajador (2026-09-23) ---
+    // Lectura abierta a cualquier autenticado: el propio socio necesita ver
+    // la lista de locales activos para elegir uno al generar su cupón —
+    // escritura (crear/editar/eliminar) solo un admin desde el panel.
+    match /locales/{localId} {
+      allow read: if request.auth != null;
+      allow create, update, delete: if esAdminActivo();
+    }
+
+    // --- Cupón de acceso QR de Embajador (2026-09-23, sección 9.15/9.25) ---
+    // El ID de cada documento es el código aleatorio del cupón (no
+    // adivinable). A propósito NO hay `update`/`delete` para ningún cliente
+    // — quien valida el cupón en la puerta de un local no tiene cuenta de
+    // Firebase, así que esa escritura (pasar de "vigente" a "usado") la hace
+    // el sitio PHP con su cuenta de servicio, que no pasa por estas reglas.
+    match /cupones_acceso/{codigo} {
+      // Lectura: solo el propio dueño (para poder mostrar su QR/cuenta
+      // regresiva mientras esté vigente) — nadie más puede leer un cupón
+      // ajeno ni antes ni después de usarlo, la validación en el local nunca
+      // necesita leer desde el navegador del cliente (ver
+      // ValidarCuponScreen/cdlr_validar_cupon_acceso, que usa la cuenta de
+      // servicio).
+      allow read: if request.auth != null
+        && request.auth.token.email.lower() == resource.data.socioEmail;
+
+      // Creación: el propio socio crea su propio cupón, siempre en estado
+      // "vigente" — no se valida acá que no tenga ya uno vigente (la app ya
+      // lo bloquea del lado cliente); una carrera exacta entre 2 clics es un
+      // caso extremo aceptable, no justifica una Cloud Function aparte.
+      allow create: if request.auth != null
+        && request.auth.token.email.lower() == request.resource.data.socioEmail
+        && request.resource.data.estado == 'vigente';
+
+      allow update, delete: if false;
+    }
   }
 }

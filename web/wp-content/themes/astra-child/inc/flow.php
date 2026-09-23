@@ -1475,3 +1475,116 @@ function cdlr_socios_handle_editar() {
 }
 add_action( 'admin_post_cdlr_socios_editar', 'cdlr_socios_handle_editar' );
 add_action( 'admin_post_nopriv_cdlr_socios_editar', 'cdlr_socios_handle_editar' );
+
+
+/* ---------------------------------------------------------------------
+ * Validar (consumir) un cupón de acceso QR de Embajador — agregado
+ * 2026-09-23, diseño confirmado con la directiva (PROYECTO.md sección
+ * 9.15/9.25). A diferencia de todos los demás endpoints de este archivo,
+ * este NO exige un token de admin de Firebase: quien recibe a los socios en
+ * la puerta de un local no tiene cuenta — la seguridad viene del código
+ * mismo (largo y aleatorio, imposible de adivinar), no de quién llama.
+ * ------------------------------------------------------------------ */
+
+/**
+ * @return array{socioNombre:string}|WP_Error
+ */
+function cdlr_flow_validar_cupon_acceso( $local_id, $codigo ) {
+	$codigo = trim( (string) $codigo );
+	if ( '' === $codigo ) {
+		return new WP_Error( 'cdlr_cupon_invalido', 'Código inválido.' );
+	}
+	if ( ! defined( 'CDLR_FIREBASE_PROJECT_ID' ) || ! defined( 'CDLR_FIREBASE_CLIENT_EMAIL' ) || ! defined( 'CDLR_FIREBASE_PRIVATE_KEY' ) ) {
+		return new WP_Error( 'cdlr_firebase_no_configurado', 'No se pudo validar (Firebase no configurado).' );
+	}
+
+	$access_token = cdlr_flow_firebase_access_token();
+	if ( is_wp_error( $access_token ) ) {
+		return $access_token;
+	}
+
+	$doc_url = sprintf(
+		'https://firestore.googleapis.com/v1/projects/%s/databases/(default)/documents/cupones_acceso/%s',
+		CDLR_FIREBASE_PROJECT_ID,
+		rawurlencode( $codigo )
+	);
+
+	$response = wp_remote_get( $doc_url, [
+		'headers' => [ 'Authorization' => 'Bearer ' . $access_token ],
+		'timeout' => 15,
+	] );
+	if ( is_wp_error( $response ) ) {
+		return $response;
+	}
+	if ( 404 === wp_remote_retrieve_response_code( $response ) ) {
+		return new WP_Error( 'cdlr_cupon_no_encontrado', 'Código inválido.' );
+	}
+
+	$doc            = json_decode( wp_remote_retrieve_body( $response ), true );
+	$fields         = $doc['fields'] ?? [];
+	$estado         = $fields['estado']['stringValue'] ?? '';
+	$local_id_real  = $fields['localId']['stringValue'] ?? '';
+	$socio_nombre   = $fields['socioNombre']['stringValue'] ?? '';
+	$expira_en      = $fields['expiraEn']['timestampValue'] ?? '';
+
+	// Chequeos en este orden a propósito: primero si ya se usó (el caso más
+	// común de un intento repetido), después si es de otro local, y recién
+	// al final si expiró — no cambia la seguridad, solo da un mensaje más
+	// útil a quien está validando en la puerta.
+	if ( 'vigente' !== $estado ) {
+		return new WP_Error( 'cdlr_cupon_usado', 'Este código ya fue usado.' );
+	}
+	if ( (string) $local_id_real !== (string) $local_id ) {
+		return new WP_Error( 'cdlr_cupon_local_incorrecto', 'Este código no corresponde a este local.' );
+	}
+	if ( $expira_en && strtotime( $expira_en ) < time() ) {
+		return new WP_Error( 'cdlr_cupon_expirado', 'Este código ya expiró.' );
+	}
+
+	// Se marca "usado" recién acá, después de confirmar que corresponde —
+	// no hay transacción atómica contra un doble llamado exacto en el mismo
+	// instante (mismo criterio aceptado ya en la generación del cupón: caso
+	// extremo de bajo volumen, no justifica la complejidad de una
+	// transacción real contra la API de Firestore).
+	$fields_actualizados = [
+		'estado'  => [ 'stringValue' => 'usado' ],
+		'usadoEn' => [ 'timestampValue' => gmdate( 'Y-m-d\TH:i:s\Z' ) ],
+	];
+	$query_mask = implode( '&', array_map(
+		fn( $campo ) => 'updateMask.fieldPaths=' . rawurlencode( $campo ),
+		array_keys( $fields_actualizados )
+	) );
+	$update_response = wp_remote_request( $doc_url . '?' . $query_mask, [
+		'method'  => 'PATCH',
+		'headers' => [
+			'Authorization' => 'Bearer ' . $access_token,
+			'Content-Type'  => 'application/json',
+		],
+		'body'    => wp_json_encode( [ 'fields' => $fields_actualizados ] ),
+		'timeout' => 15,
+	] );
+	if ( is_wp_error( $update_response ) ) {
+		return $update_response;
+	}
+
+	return [ 'socioNombre' => $socio_nombre ];
+}
+
+function cdlr_validar_cupon_acceso_handle() {
+	cdlr_cupones_cors_headers(); // Genérico: mismo whitelist de orígenes que Cupones — no específico de ese panel a pesar del nombre.
+	if ( 'OPTIONS' === ( $_SERVER['REQUEST_METHOD'] ?? '' ) ) {
+		status_header( 200 );
+		exit;
+	}
+
+	$local_id = isset( $_POST['localId'] ) ? sanitize_text_field( wp_unslash( $_POST['localId'] ) ) : '';
+	$codigo   = isset( $_POST['codigo'] ) ? sanitize_text_field( wp_unslash( $_POST['codigo'] ) ) : '';
+
+	$result = cdlr_flow_validar_cupon_acceso( $local_id, $codigo );
+	if ( is_wp_error( $result ) ) {
+		wp_send_json_error( [ 'message' => $result->get_error_message() ], 400 );
+	}
+	wp_send_json_success( [ 'socioNombre' => $result['socioNombre'], 'message' => '¡Acceso válido!' ] );
+}
+add_action( 'admin_post_cdlr_validar_cupon_acceso', 'cdlr_validar_cupon_acceso_handle' );
+add_action( 'admin_post_nopriv_cdlr_validar_cupon_acceso', 'cdlr_validar_cupon_acceso_handle' );
