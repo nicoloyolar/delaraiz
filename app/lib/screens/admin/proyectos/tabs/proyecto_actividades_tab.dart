@@ -1,8 +1,9 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../app/app_colors.dart';
+import '../../../../app/app_palette.dart';
 import '../../../../models/actividad_model.dart';
 import '../../../../providers/providers.dart';
 import '../../../../utils/validators.dart';
@@ -65,8 +66,8 @@ class ProyectoActividadesTab extends ConsumerWidget {
             child: actividadesAsync.when(
               data: (actividades) {
                 if (actividades.isEmpty) {
-                  return const Center(
-                    child: Text('Aún no hay actividades registradas.', style: TextStyle(color: AppColors.textSecondary)),
+                  return Center(
+                    child: Text('Aún no hay actividades registradas.', style: TextStyle(color: context.colors.textSecondary)),
                   );
                 }
                 return ListView.separated(
@@ -77,9 +78,9 @@ class ProyectoActividadesTab extends ConsumerWidget {
                     return Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: AppColors.surface,
+                        color: context.colors.surface,
                         borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: AppColors.border),
+                        border: Border.all(color: context.colors.border),
                       ),
                       child: Row(
                         children: [
@@ -90,13 +91,13 @@ class ProyectoActividadesTab extends ConsumerWidget {
                                 Text(actividad.titulo, style: Theme.of(context).textTheme.titleSmall),
                                 if (actividad.descripcion != null && actividad.descripcion!.isNotEmpty) ...[
                                   const SizedBox(height: 4),
-                                  Text(actividad.descripcion!, style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+                                  Text(actividad.descripcion!, style: TextStyle(color: context.colors.textSecondary, fontSize: 13)),
                                 ],
                                 if (actividad.fechaProgramada != null) ...[
                                   const SizedBox(height: 6),
                                   Text(
                                     DateFormat('dd/MM/yyyy').format(actividad.fechaProgramada!),
-                                    style: const TextStyle(color: AppColors.textMuted, fontSize: 12),
+                                    style: TextStyle(color: context.colors.textMuted, fontSize: 12),
                                   ),
                                 ],
                               ],

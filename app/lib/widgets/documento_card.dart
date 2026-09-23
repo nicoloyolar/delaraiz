@@ -1,7 +1,8 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../app/app_colors.dart';
+import '../app/app_palette.dart';
 import '../models/documento_model.dart';
 
 IconData _iconoCategoria(CategoriaDocumento categoria) {
@@ -81,12 +82,12 @@ class DocumentoCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               decoration: BoxDecoration(
-                color: AppColors.surfaceElevated,
+                color: context.colors.surfaceElevated,
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
                 documento.categoria.label,
-                style: const TextStyle(fontSize: 12, color: AppColors.textSecondary, fontWeight: FontWeight.w600),
+                style: TextStyle(fontSize: 12, color: context.colors.textSecondary, fontWeight: FontWeight.w600),
               ),
             ),
             if (documento.descripcion != null && documento.descripcion!.isNotEmpty) ...[
@@ -101,7 +102,7 @@ class DocumentoCard extends StatelessWidget {
             const Spacer(),
             Row(
               children: [
-                Icon(Icons.event_outlined, size: 14, color: AppColors.textMuted),
+                Icon(Icons.event_outlined, size: 14, color: context.colors.textMuted),
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(

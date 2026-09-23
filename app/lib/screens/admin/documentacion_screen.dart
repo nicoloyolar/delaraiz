@@ -1,8 +1,9 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../app/app_colors.dart';
+import '../../app/app_palette.dart';
 import '../../models/documento_model.dart';
 import '../../providers/providers.dart';
 import '../../widgets/documento_card.dart';
@@ -178,11 +179,11 @@ class DocumentacionScreen extends ConsumerWidget {
       label: Text(label),
       selected: seleccionado,
       onSelected: (_) => ref.read(categoriaDocumentoFiltroProvider.notifier).state = categoria,
-      backgroundColor: AppColors.surface,
+      backgroundColor: context.colors.surface,
       selectedColor: AppColors.accentSoft,
-      side: BorderSide(color: seleccionado ? AppColors.accent : AppColors.border),
+      side: BorderSide(color: seleccionado ? AppColors.accent : context.colors.border),
       labelStyle: TextStyle(
-        color: seleccionado ? AppColors.accent : AppColors.textSecondary,
+        color: seleccionado ? AppColors.accent : context.colors.textSecondary,
         fontWeight: seleccionado ? FontWeight.w700 : FontWeight.w500,
       ),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),

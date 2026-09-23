@@ -1,7 +1,8 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../app/app_colors.dart';
+import '../app/app_palette.dart';
 import '../models/banda_model.dart';
 import 'estado_chip.dart';
 
@@ -70,17 +71,17 @@ class BandaCard extends StatelessWidget {
               const SizedBox(height: 14),
               EstadoChip(estado: banda.estado),
               const SizedBox(height: 14),
-              _filaIcono(theme, Icons.location_on_outlined, banda.comuna),
+              _filaIcono(context, theme, Icons.location_on_outlined, banda.comuna),
               const SizedBox(height: 6),
-              _filaIcono(theme, Icons.graphic_eq_rounded, banda.generoMusical),
+              _filaIcono(context, theme, Icons.graphic_eq_rounded, banda.generoMusical),
               const SizedBox(height: 6),
-              _filaIcono(theme, Icons.person_outline_rounded, banda.nombreRepresentante),
+              _filaIcono(context, theme, Icons.person_outline_rounded, banda.nombreRepresentante),
               const Spacer(),
               Padding(
                 padding: const EdgeInsets.only(top: 12),
                 child: Row(
                   children: [
-                    Icon(Icons.event_outlined, size: 14, color: AppColors.textMuted),
+                    Icon(Icons.event_outlined, size: 14, color: context.colors.textMuted),
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
@@ -89,7 +90,7 @@ class BandaCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    Icon(Icons.arrow_forward_rounded, size: 16, color: AppColors.textMuted),
+                    Icon(Icons.arrow_forward_rounded, size: 16, color: context.colors.textMuted),
                   ],
                 ),
               ),
@@ -100,15 +101,15 @@ class BandaCard extends StatelessWidget {
     );
   }
 
-  Widget _filaIcono(ThemeData theme, IconData icon, String texto) {
+  Widget _filaIcono(BuildContext context, ThemeData theme, IconData icon, String texto) {
     return Row(
       children: [
-        Icon(icon, size: 15, color: AppColors.textMuted),
+        Icon(icon, size: 15, color: context.colors.textMuted),
         const SizedBox(width: 6),
         Expanded(
           child: Text(
             texto,
-            style: theme.textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
+            style: theme.textTheme.bodySmall?.copyWith(color: context.colors.textSecondary),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),

@@ -1,10 +1,11 @@
-import 'package:file_picker/file_picker.dart';
+﻿import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../app/app_colors.dart';
+import '../../../app/app_palette.dart';
 import '../../../app/estado_colors.dart';
 import '../../../models/postulacion_fondo_model.dart';
 import '../../../models/rendicion_model.dart';
@@ -24,7 +25,7 @@ class FondoDetailScreen extends ConsumerWidget {
     final fondoAsync = ref.watch(fondoDetalleProvider(fondoId));
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.colors.background,
       appBar: AppBar(title: const Text('Postulación a fondo')),
       body: fondoAsync.when(
         data: (fondo) {
@@ -103,9 +104,9 @@ class _DetalleContenidoState extends ConsumerState<_DetalleContenido> {
               Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: AppColors.surface,
+                  color: context.colors.surface,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AppColors.border),
+                  border: Border.all(color: context.colors.border),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -119,15 +120,15 @@ class _DetalleContenidoState extends ConsumerState<_DetalleContenido> {
                     ),
                     if (fondo.institucion != null) ...[
                       const SizedBox(height: 6),
-                      Text(fondo.institucion!, style: const TextStyle(color: AppColors.textSecondary)),
+                      Text(fondo.institucion!, style: TextStyle(color: context.colors.textSecondary)),
                     ],
                     const SizedBox(height: 16),
                     Wrap(
                       spacing: 24,
                       runSpacing: 12,
                       children: [
-                        _metric('Monto solicitado', formatoMoneda.format(fondo.montoSolicitado)),
-                        _metric('Monto aprobado', fondo.montoAprobado != null ? formatoMoneda.format(fondo.montoAprobado) : '—'),
+                        _metric(context, 'Monto solicitado', formatoMoneda.format(fondo.montoSolicitado)),
+                        _metric(context, 'Monto aprobado', fondo.montoAprobado != null ? formatoMoneda.format(fondo.montoAprobado) : '—'),
                       ],
                     ),
                   ],
@@ -171,7 +172,7 @@ class _DetalleContenidoState extends ConsumerState<_DetalleContenido> {
                     rendicionesAsync.when(
                       data: (rendiciones) {
                         if (rendiciones.isEmpty) {
-                          return const Text('Aún no hay gastos rendidos.', style: TextStyle(color: AppColors.textSecondary));
+                          return Text('Aún no hay gastos rendidos.', style: TextStyle(color: context.colors.textSecondary));
                         }
                         final totalRendido = rendiciones.fold<double>(0, (acc, r) => acc + r.monto);
                         return Column(
@@ -206,13 +207,13 @@ class _DetalleContenidoState extends ConsumerState<_DetalleContenido> {
     );
   }
 
-  Widget _metric(String label, String value) {
+  Widget _metric(BuildContext context, String label, String value) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(color: AppColors.textMuted, fontSize: 12)),
+        Text(label, style: TextStyle(color: context.colors.textMuted, fontSize: 12)),
         const SizedBox(height: 2),
-        Text(value, style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700, fontSize: 16)),
+        Text(value, style: TextStyle(color: context.colors.textPrimary, fontWeight: FontWeight.w700, fontSize: 16)),
       ],
     );
   }
@@ -221,9 +222,9 @@ class _DetalleContenidoState extends ConsumerState<_DetalleContenido> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.colors.surface,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: context.colors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -247,20 +248,20 @@ class _DetalleContenidoState extends ConsumerState<_DetalleContenido> {
       padding: const EdgeInsets.only(bottom: 8),
       child: Container(
         padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(color: AppColors.surfaceElevated, borderRadius: BorderRadius.circular(12)),
+        decoration: BoxDecoration(color: context.colors.surfaceElevated, borderRadius: BorderRadius.circular(12)),
         child: Row(
           children: [
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(rendicion.concepto, style: const TextStyle(color: AppColors.textPrimary)),
+                  Text(rendicion.concepto, style: TextStyle(color: context.colors.textPrimary)),
                   if (rendicion.fecha != null)
-                    Text(DateFormat('dd/MM/yyyy').format(rendicion.fecha!), style: const TextStyle(color: AppColors.textMuted, fontSize: 12)),
+                    Text(DateFormat('dd/MM/yyyy').format(rendicion.fecha!), style: TextStyle(color: context.colors.textMuted, fontSize: 12)),
                 ],
               ),
             ),
-            Text(formato.format(rendicion.monto), style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w700)),
+            Text(formato.format(rendicion.monto), style: TextStyle(color: context.colors.textPrimary, fontWeight: FontWeight.w700)),
             if (rendicion.comprobanteUrl != null)
               IconButton(
                 icon: const Icon(Icons.receipt_outlined, size: 18),
@@ -358,7 +359,7 @@ class _RendicionFormDialogState extends ConsumerState<_RendicionFormDialog> {
               const SizedBox(height: 14),
               Container(
                 padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(border: Border.all(color: AppColors.border), borderRadius: BorderRadius.circular(12)),
+                decoration: BoxDecoration(border: Border.all(color: context.colors.border), borderRadius: BorderRadius.circular(12)),
                 child: Row(
                   children: [
                     const Icon(Icons.picture_as_pdf_outlined, color: AppColors.accent),

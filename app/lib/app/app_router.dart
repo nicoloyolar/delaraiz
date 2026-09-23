@@ -15,6 +15,7 @@ import '../screens/admin/financiamiento/financiamiento_list_screen.dart';
 import '../screens/admin/login_screen.dart';
 import '../screens/admin/proyectos/proyecto_detail_screen.dart';
 import '../screens/admin/proyectos/proyectos_list_screen.dart';
+import '../screens/admin/agenda/agenda_list_screen.dart';
 import '../screens/admin/cupones/cupones_list_screen.dart';
 import '../screens/admin/resumen_screen.dart';
 import '../screens/admin/socios/socios_list_screen.dart';
@@ -29,6 +30,7 @@ import '../widgets/admin_shell.dart';
 /// `AdminShell`.
 AdminRoute _adminRouteDeUbicacion(String location) {
   if (location.startsWith('/admin/proyectos')) return AdminRoute.proyectos;
+  if (location.startsWith('/admin/agenda')) return AdminRoute.agenda;
   if (location.startsWith('/admin/espacios')) return AdminRoute.espacios;
   if (location.startsWith('/admin/equipo')) return AdminRoute.equipo;
   if (location.startsWith('/admin/financiamiento')) return AdminRoute.financiamiento;
@@ -143,6 +145,11 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/admin/proyectos',
             pageBuilder: (context, state) =>
                 const NoTransitionPage(child: ProyectosListScreen()),
+          ),
+          GoRoute(
+            path: '/admin/agenda',
+            pageBuilder: (context, state) =>
+                const NoTransitionPage(child: AgendaListScreen()),
           ),
           GoRoute(
             path: '/admin/espacios',

@@ -1,7 +1,8 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../app/app_colors.dart';
+import '../../../../app/app_palette.dart';
 import '../../../../app/estado_colors.dart';
 import '../../../../models/componente_model.dart';
 import '../../../../providers/providers.dart';
@@ -64,8 +65,8 @@ class ProyectoComponentesTab extends ConsumerWidget {
             child: componentesAsync.when(
               data: (componentes) {
                 if (componentes.isEmpty) {
-                  return const Center(
-                    child: Text('Aún no hay componentes registrados.', style: TextStyle(color: AppColors.textSecondary)),
+                  return Center(
+                    child: Text('Aún no hay componentes registrados.', style: TextStyle(color: context.colors.textSecondary)),
                   );
                 }
                 return ListView.separated(
@@ -76,9 +77,9 @@ class ProyectoComponentesTab extends ConsumerWidget {
                     return Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: AppColors.surface,
+                        color: context.colors.surface,
                         borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: AppColors.border),
+                        border: Border.all(color: context.colors.border),
                       ),
                       child: Row(
                         children: [
@@ -88,10 +89,10 @@ class ProyectoComponentesTab extends ConsumerWidget {
                               children: [
                                 Text('${componente.nombre}  ×${componente.cantidad}', style: Theme.of(context).textTheme.titleSmall),
                                 const SizedBox(height: 4),
-                                Text(componente.tipo.label, style: const TextStyle(color: AppColors.textMuted, fontSize: 12)),
+                                Text(componente.tipo.label, style: TextStyle(color: context.colors.textMuted, fontSize: 12)),
                                 if (componente.notas != null && componente.notas!.isNotEmpty) ...[
                                   const SizedBox(height: 4),
-                                  Text(componente.notas!, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                                  Text(componente.notas!, style: TextStyle(color: context.colors.textSecondary, fontSize: 12)),
                                 ],
                               ],
                             ),

@@ -1,8 +1,9 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/app_colors.dart';
+import '../../../../app/app_palette.dart';
 import '../../../../models/banda_model.dart';
 import '../../../../providers/providers.dart';
 import '../../../../widgets/banda_card.dart';
@@ -44,9 +45,9 @@ class ProyectoBandasTab extends ConsumerWidget {
           Wrap(
             spacing: 8,
             children: [
-              _filtroChip(ref, label: 'Todas', estado: null, actual: filtroEstado),
+              _filtroChip(context, ref, label: 'Todas', estado: null, actual: filtroEstado),
               for (final estado in EstadoPostulacion.values)
-                _filtroChip(ref, label: estado.label, estado: estado, actual: filtroEstado),
+                _filtroChip(context, ref, label: estado.label, estado: estado, actual: filtroEstado),
             ],
           ),
           const SizedBox(height: 16),
@@ -54,8 +55,8 @@ class ProyectoBandasTab extends ConsumerWidget {
             child: postulacionesAsync.when(
               data: (bandas) {
                 if (bandas.isEmpty) {
-                  return const Center(
-                    child: Text('No hay postulaciones que coincidan con el filtro.', style: TextStyle(color: AppColors.textSecondary)),
+                  return Center(
+                    child: Text('No hay postulaciones que coincidan con el filtro.', style: TextStyle(color: context.colors.textSecondary)),
                   );
                 }
                 return LayoutBuilder(
@@ -91,6 +92,7 @@ class ProyectoBandasTab extends ConsumerWidget {
   }
 
   Widget _filtroChip(
+    BuildContext context,
     WidgetRef ref, {
     required String label,
     required EstadoPostulacion? estado,
@@ -101,11 +103,11 @@ class ProyectoBandasTab extends ConsumerWidget {
       label: Text(label),
       selected: seleccionado,
       onSelected: (_) => ref.read(filtroEstadoProvider.notifier).state = estado,
-      backgroundColor: AppColors.surface,
+      backgroundColor: context.colors.surface,
       selectedColor: AppColors.accentSoft,
-      side: BorderSide(color: seleccionado ? AppColors.accent : AppColors.border),
+      side: BorderSide(color: seleccionado ? AppColors.accent : context.colors.border),
       labelStyle: TextStyle(
-        color: seleccionado ? AppColors.accent : AppColors.textSecondary,
+        color: seleccionado ? AppColors.accent : context.colors.textSecondary,
         fontWeight: seleccionado ? FontWeight.w700 : FontWeight.w500,
       ),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),

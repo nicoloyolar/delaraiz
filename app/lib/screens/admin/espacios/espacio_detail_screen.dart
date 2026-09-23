@@ -1,9 +1,10 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../app/app_colors.dart';
+import '../../../app/app_palette.dart';
 import '../../../models/espacio_model.dart';
 import '../../../providers/providers.dart';
 import 'espacio_form_dialog.dart';
@@ -50,7 +51,7 @@ class EspacioDetailScreen extends ConsumerWidget {
     final espacioAsync = ref.watch(espacioDetalleProvider(espacioId));
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.colors.background,
       appBar: AppBar(title: const Text('Detalle del espacio')),
       body: espacioAsync.when(
         data: (espacio) {
@@ -95,9 +96,9 @@ class _DetalleContenido extends ConsumerWidget {
               Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: AppColors.surface,
+                  color: context.colors.surface,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AppColors.border),
+                  border: Border.all(color: context.colors.border),
                 ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -108,7 +109,7 @@ class _DetalleContenido extends ConsumerWidget {
                         children: [
                           Text(espacio.nombre, style: theme.textTheme.headlineSmall),
                           const SizedBox(height: 6),
-                          Text('${espacio.direccion}, ${espacio.comuna}', style: const TextStyle(color: AppColors.textSecondary)),
+                          Text('${espacio.direccion}, ${espacio.comuna}', style: TextStyle(color: context.colors.textSecondary)),
                         ],
                       ),
                     ),
@@ -127,10 +128,10 @@ class _DetalleContenido extends ConsumerWidget {
                 titulo: 'Datos generales',
                 child: Column(
                   children: [
-                    _fila('Tenencia', espacio.tipoTenencia.label),
-                    _fila('Estado legal', espacio.estadoLegal ?? '—'),
-                    _fila('Capacidad', espacio.capacidad?.toString() ?? '—'),
-                    _fila('Descripción', espacio.descripcion ?? '—'),
+                    _fila(context, 'Tenencia', espacio.tipoTenencia.label),
+                    _fila(context, 'Estado legal', espacio.estadoLegal ?? '—'),
+                    _fila(context, 'Capacidad', espacio.capacidad?.toString() ?? '—'),
+                    _fila(context, 'Descripción', espacio.descripcion ?? '—'),
                   ],
                 ),
               ),
@@ -182,8 +183,8 @@ class _DetalleContenido extends ConsumerWidget {
                 child: proyectosAsync.when(
                   data: (proyectos) {
                     if (proyectos.isEmpty) {
-                      return const Text('Este espacio no ha sido asociado a ningún proyecto todavía.',
-                          style: TextStyle(color: AppColors.textSecondary));
+                      return Text('Este espacio no ha sido asociado a ningún proyecto todavía.',
+                          style: TextStyle(color: context.colors.textSecondary));
                     }
                     return Column(
                       children: [
@@ -221,9 +222,9 @@ class _DetalleContenido extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.colors.surface,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: context.colors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -242,14 +243,14 @@ class _DetalleContenido extends ConsumerWidget {
     );
   }
 
-  Widget _fila(String etiqueta, String valor) {
+  Widget _fila(BuildContext context, String etiqueta, String valor) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(width: 140, child: Text(etiqueta, style: const TextStyle(color: AppColors.textMuted, fontSize: 13))),
-          Expanded(child: Text(valor, style: const TextStyle(color: AppColors.textPrimary))),
+          SizedBox(width: 140, child: Text(etiqueta, style: TextStyle(color: context.colors.textMuted, fontSize: 13))),
+          Expanded(child: Text(valor, style: TextStyle(color: context.colors.textPrimary))),
         ],
       ),
     );

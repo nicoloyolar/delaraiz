@@ -35,6 +35,13 @@ dependencies:
   intl: ^0.19.0
   uuid: ^4.5.1
 
+  # --- Persistencia local: recordar el modo claro/oscuro elegido (en Web
+  # queda en el localStorage del navegador) entre sesiones.
+  shared_preferences: ^2.3.2
+
+  # --- Agenda: calendario mensual interactivo ---
+  table_calendar: ^3.1.2
+
   # --- Tipografía ---
   google_fonts: ^6.2.1
 

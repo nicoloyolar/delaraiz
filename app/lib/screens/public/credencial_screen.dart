@@ -1,9 +1,10 @@
-import 'package:firebase_auth/firebase_auth.dart';
+﻿import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../app/app_colors.dart';
+import '../../app/app_palette.dart';
 import '../../models/credencial_model.dart';
 import '../../providers/providers.dart';
 import '../../utils/validators.dart';
@@ -218,7 +219,7 @@ class _SinCredencial extends ConsumerWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.search_off, size: 48, color: AppColors.textMuted),
+              Icon(Icons.search_off, size: 48, color: context.colors.textMuted),
               const SizedBox(height: 16),
               Text(
                 'No encontramos una membresía activa para $email.',
@@ -326,7 +327,7 @@ class _TarjetaCredencial extends ConsumerWidget {
                         const SizedBox(height: 16),
                         Text(
                           'Próximo cobro: ${formatoFecha.format(credencial.proximoCobro!)}',
-                          style: const TextStyle(color: AppColors.textSecondary),
+                          style: TextStyle(color: context.colors.textSecondary),
                         ),
                       ],
                     ],

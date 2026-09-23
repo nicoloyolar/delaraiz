@@ -1,7 +1,8 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/app_colors.dart';
+import '../../../app/app_palette.dart';
 import '../../../models/persona_model.dart';
 import '../../../providers/providers.dart';
 import 'persona_form_dialog.dart';
@@ -97,9 +98,9 @@ class EquipoListScreen extends ConsumerWidget {
                     return Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: AppColors.surface,
+                        color: context.colors.surface,
                         borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: AppColors.border),
+                        border: Border.all(color: context.colors.border),
                       ),
                       child: Row(
                         children: [
@@ -125,20 +126,20 @@ class EquipoListScreen extends ConsumerWidget {
                                       const SizedBox(width: 8),
                                       Container(
                                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                        decoration: BoxDecoration(color: AppColors.surfaceElevated, borderRadius: BorderRadius.circular(8)),
-                                        child: const Text('Inactivo', style: TextStyle(fontSize: 11, color: AppColors.textMuted)),
+                                        decoration: BoxDecoration(color: context.colors.surfaceElevated, borderRadius: BorderRadius.circular(8)),
+                                        child: Text('Inactivo', style: TextStyle(fontSize: 11, color: context.colors.textMuted)),
                                       ),
                                     ],
                                   ],
                                 ),
                                 Text(
                                   [persona.tipo.label, if (persona.rolInstitucional != null) persona.rolInstitucional!].join(' · '),
-                                  style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                                  style: TextStyle(color: context.colors.textSecondary, fontSize: 13),
                                 ),
                                 if (persona.correo != null || persona.telefono != null)
                                   Text(
                                     [persona.correo, persona.telefono].where((s) => s != null).join(' · '),
-                                    style: const TextStyle(color: AppColors.textMuted, fontSize: 12),
+                                    style: TextStyle(color: context.colors.textMuted, fontSize: 12),
                                   ),
                               ],
                             ),

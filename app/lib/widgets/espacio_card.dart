@@ -1,6 +1,7 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../app/app_colors.dart';
+import '../app/app_palette.dart';
 import '../models/espacio_model.dart';
 
 /// Tarjeta resumen de un Espacio recuperado en el grid del listado.
@@ -44,22 +45,22 @@ class EspacioCard extends StatelessWidget {
               const SizedBox(height: 12),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                decoration: BoxDecoration(color: AppColors.surfaceElevated, borderRadius: BorderRadius.circular(20)),
+                decoration: BoxDecoration(color: context.colors.surfaceElevated, borderRadius: BorderRadius.circular(20)),
                 child: Text(
                   espacio.tipoTenencia.label,
-                  style: const TextStyle(fontSize: 12, color: AppColors.textSecondary, fontWeight: FontWeight.w600),
+                  style: TextStyle(fontSize: 12, color: context.colors.textSecondary, fontWeight: FontWeight.w600),
                 ),
               ),
               const SizedBox(height: 10),
-              _fila(Icons.location_on_outlined, '${espacio.direccion}, ${espacio.comuna}'),
+              _fila(context, Icons.location_on_outlined, '${espacio.direccion}, ${espacio.comuna}'),
               if (espacio.capacidad != null) ...[
                 const SizedBox(height: 6),
-                _fila(Icons.groups_outlined, 'Capacidad: ${espacio.capacidad}'),
+                _fila(context, Icons.groups_outlined, 'Capacidad: ${espacio.capacidad}'),
               ],
               const Spacer(),
-              const Row(
+              Row(
                 children: [
-                  Icon(Icons.arrow_forward_rounded, size: 16, color: AppColors.textMuted),
+                  Icon(Icons.arrow_forward_rounded, size: 16, color: context.colors.textMuted),
                 ],
               ),
             ],
@@ -69,15 +70,15 @@ class EspacioCard extends StatelessWidget {
     );
   }
 
-  Widget _fila(IconData icon, String texto) {
+  Widget _fila(BuildContext context, IconData icon, String texto) {
     return Row(
       children: [
-        Icon(icon, size: 15, color: AppColors.textMuted),
+        Icon(icon, size: 15, color: context.colors.textMuted),
         const SizedBox(width: 6),
         Expanded(
           child: Text(
             texto,
-            style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+            style: TextStyle(color: context.colors.textSecondary, fontSize: 13),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),

@@ -1,6 +1,6 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
-import '../app/app_colors.dart';
+import '../app/app_palette.dart';
 
 /// Tarjeta compacta de métrica (KPI) para el encabezado del dashboard,
 /// p. ej. "Total postulaciones", "Pendientes", etc.
@@ -25,9 +25,9 @@ class StatCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.colors.surface,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: context.colors.border),
       ),
       child: Row(
         children: [

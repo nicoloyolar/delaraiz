@@ -1,8 +1,9 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/app_colors.dart';
+import '../../app/app_palette.dart';
 import '../../app/estado_colors.dart';
 import '../../models/postulacion_fondo_model.dart';
 import '../../models/proyecto_model.dart';
@@ -88,9 +89,9 @@ class ResumenScreen extends ConsumerWidget {
                         margin: const EdgeInsets.only(bottom: 10),
                         padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
-                          color: AppColors.surface,
+                          color: context.colors.surface,
                           borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: AppColors.border),
+                          border: Border.all(color: context.colors.border),
                         ),
                         child: InkWell(
                           onTap: () => context.push('/admin/proyectos/${proyecto.id}'),

@@ -1,9 +1,9 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
-import '../../../../app/app_colors.dart';
+import '../../../../app/app_palette.dart';
 import '../../../../app/estado_colors.dart';
 import '../../../../providers/providers.dart';
 import '../../../../widgets/pill.dart';
@@ -42,8 +42,8 @@ class ProyectoFinanciamientoTab extends ConsumerWidget {
             child: fondosAsync.when(
               data: (fondos) {
                 if (fondos.isEmpty) {
-                  return const Center(
-                    child: Text('Este proyecto no tiene postulaciones a fondos registradas.', style: TextStyle(color: AppColors.textSecondary)),
+                  return Center(
+                    child: Text('Este proyecto no tiene postulaciones a fondos registradas.', style: TextStyle(color: context.colors.textSecondary)),
                   );
                 }
                 return ListView.separated(
@@ -54,9 +54,9 @@ class ProyectoFinanciamientoTab extends ConsumerWidget {
                     return Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: AppColors.surface,
+                        color: context.colors.surface,
                         borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: AppColors.border),
+                        border: Border.all(color: context.colors.border),
                       ),
                       child: InkWell(
                         onTap: () => context.push('/admin/financiamiento/${fondo.id}'),
@@ -68,11 +68,11 @@ class ProyectoFinanciamientoTab extends ConsumerWidget {
                                 children: [
                                   Text(fondo.nombreFondo, style: Theme.of(context).textTheme.titleSmall),
                                   if (fondo.institucion != null)
-                                    Text(fondo.institucion!, style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+                                    Text(fondo.institucion!, style: TextStyle(color: context.colors.textSecondary, fontSize: 12)),
                                 ],
                               ),
                             ),
-                            Text(formatoMoneda.format(fondo.montoSolicitado), style: const TextStyle(color: AppColors.textPrimary)),
+                            Text(formatoMoneda.format(fondo.montoSolicitado), style: TextStyle(color: context.colors.textPrimary)),
                             const SizedBox(width: 12),
                             Pill(label: fondo.estado.label, color: EstadoColors.fondo(fondo.estado)),
                           ],

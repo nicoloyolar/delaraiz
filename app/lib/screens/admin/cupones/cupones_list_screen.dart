@@ -1,7 +1,8 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/app_colors.dart';
+import '../../../app/app_palette.dart';
 import '../../../models/cupon_model.dart';
 import '../../../providers/providers.dart';
 import '../../../widgets/pill.dart';
@@ -155,9 +156,9 @@ class _FilaCupon extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.colors.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: context.colors.border),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -186,7 +187,7 @@ class _FilaCupon extends StatelessWidget {
                     const SizedBox(width: 8),
                     Pill(
                       label: estaVencido ? 'Vencido' : (activoDeVerdad ? 'Activo' : 'Desactivado'),
-                      color: activoDeVerdad ? AppColors.seleccionada : AppColors.textMuted,
+                      color: activoDeVerdad ? AppColors.seleccionada : context.colors.textMuted,
                     ),
                   ],
                 ),
@@ -198,18 +199,18 @@ class _FilaCupon extends StatelessWidget {
                   children: [
                     Text(
                       '${cupon.descuentoPct.toStringAsFixed(cupon.descuentoPct % 1 == 0 ? 0 : 1)}% de descuento',
-                      style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                      style: TextStyle(color: context.colors.textSecondary, fontSize: 13),
                     ),
                     Text(
                       cupon.esIlimitado
                           ? 'Usos: ${cupon.usosActuales} (sin límite)'
                           : 'Usos: ${cupon.usosActuales}/${cupon.usosMaximos}',
-                      style: const TextStyle(color: AppColors.textMuted, fontSize: 12),
+                      style: TextStyle(color: context.colors.textMuted, fontSize: 12),
                     ),
                     if (cupon.expira.isNotEmpty)
                       Text(
                         'Expira: ${cupon.expira}',
-                        style: const TextStyle(color: AppColors.textMuted, fontSize: 12),
+                        style: TextStyle(color: context.colors.textMuted, fontSize: 12),
                       ),
                   ],
                 ),
@@ -218,7 +219,7 @@ class _FilaCupon extends StatelessWidget {
           ),
           IconButton(
             icon: Icon(cupon.activo ? Icons.toggle_on_rounded : Icons.toggle_off_outlined,
-                color: cupon.activo ? AppColors.accent : AppColors.textMuted, size: 28),
+                color: cupon.activo ? AppColors.accent : context.colors.textMuted, size: 28),
             tooltip: cupon.activo ? 'Desactivar' : 'Activar',
             onPressed: onToggle,
           ),

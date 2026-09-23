@@ -1,7 +1,8 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../app/app_colors.dart';
+import '../app/app_palette.dart';
 import '../app/estado_colors.dart';
 import '../models/postulacion_fondo_model.dart';
 import 'pill.dart';
@@ -33,7 +34,7 @@ class FondoCard extends StatelessWidget {
             children: [
               Text(fondo.nombreFondo, style: theme.textTheme.titleMedium, maxLines: 2, overflow: TextOverflow.ellipsis),
               const SizedBox(height: 6),
-              Text(nombreProyecto, style: theme.textTheme.bodySmall?.copyWith(color: AppColors.textSecondary)),
+              Text(nombreProyecto, style: theme.textTheme.bodySmall?.copyWith(color: context.colors.textSecondary)),
               const SizedBox(height: 14),
               Pill(label: fondo.estado.label, color: EstadoColors.fondo(fondo.estado)),
               const Spacer(),

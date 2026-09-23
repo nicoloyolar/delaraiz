@@ -1,9 +1,10 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../app/app_colors.dart';
+import '../../app/app_palette.dart';
 import '../../models/banda_model.dart';
 import '../../providers/providers.dart';
 import '../../widgets/estado_chip.dart';
@@ -33,7 +34,7 @@ class BandaDetailScreen extends ConsumerWidget {
     final bandaAsync = ref.watch(bandaDetalleProvider(bandaId));
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.colors.background,
       appBar: AppBar(title: const Text('Detalle de postulación')),
       body: bandaAsync.when(
         data: (banda) {
@@ -115,9 +116,9 @@ class _DetalleContenidoState extends ConsumerState<_DetalleContenido> {
               Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: AppColors.surface,
+                  color: context.colors.surface,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AppColors.border),
+                  border: Border.all(color: context.colors.border),
                 ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -155,10 +156,11 @@ class _DetalleContenidoState extends ConsumerState<_DetalleContenido> {
                             spacing: 16,
                             runSpacing: 4,
                             children: [
-                              _iconoTexto(Icons.location_on_outlined, banda.comuna),
-                              _iconoTexto(Icons.graphic_eq_rounded, banda.generoMusical),
+                              _iconoTexto(context, Icons.location_on_outlined, banda.comuna),
+                              _iconoTexto(context, Icons.graphic_eq_rounded, banda.generoMusical),
                               if (banda.fechaPostulacion != null)
                                 _iconoTexto(
+                                  context,
                                   Icons.event_outlined,
                                   'Postulada el ${DateFormat('dd/MM/yyyy HH:mm').format(banda.fechaPostulacion!)}',
                                 ),
@@ -211,13 +213,13 @@ class _DetalleContenidoState extends ConsumerState<_DetalleContenido> {
     );
   }
 
-  Widget _iconoTexto(IconData icon, String texto) {
+  Widget _iconoTexto(BuildContext context, IconData icon, String texto) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 15, color: AppColors.textMuted),
+        Icon(icon, size: 15, color: context.colors.textMuted),
         const SizedBox(width: 5),
-        Text(texto, style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+        Text(texto, style: TextStyle(color: context.colors.textSecondary, fontSize: 13)),
       ],
     );
   }
@@ -226,9 +228,9 @@ class _DetalleContenidoState extends ConsumerState<_DetalleContenido> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.colors.surface,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: context.colors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -269,13 +271,13 @@ class _DetalleContenidoState extends ConsumerState<_DetalleContenido> {
                     width: 140,
                     child: Text(
                       entry.key,
-                      style: const TextStyle(color: AppColors.textMuted, fontSize: 13),
+                      style: TextStyle(color: context.colors.textMuted, fontSize: 13),
                     ),
                   ),
                   Expanded(
                     child: Text(
                       entry.value.isEmpty ? '—' : entry.value,
-                      style: const TextStyle(color: AppColors.textPrimary),
+                      style: TextStyle(color: context.colors.textPrimary),
                     ),
                   ),
                 ],
@@ -334,7 +336,7 @@ class _DetalleContenidoState extends ConsumerState<_DetalleContenido> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppColors.surfaceElevated,
+        color: context.colors.surfaceElevated,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -344,7 +346,7 @@ class _DetalleContenidoState extends ConsumerState<_DetalleContenido> {
           Expanded(
             child: Text(
               url == null ? '$etiqueta: no adjuntado' : '$etiqueta: ${nombre ?? 'archivo.pdf'}',
-              style: const TextStyle(color: AppColors.textSecondary),
+              style: TextStyle(color: context.colors.textSecondary),
               overflow: TextOverflow.ellipsis,
             ),
           ),

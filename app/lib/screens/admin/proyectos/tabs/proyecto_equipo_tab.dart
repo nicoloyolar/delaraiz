@@ -1,7 +1,8 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../app/app_colors.dart';
+import '../../../../app/app_palette.dart';
 import '../../../../models/proyecto_miembro_model.dart';
 import '../../../../providers/providers.dart';
 
@@ -48,8 +49,8 @@ class ProyectoEquipoTab extends ConsumerWidget {
             child: equipoAsync.when(
               data: (miembros) {
                 if (miembros.isEmpty) {
-                  return const Center(
-                    child: Text('Aún no hay personas asignadas a este proyecto.', style: TextStyle(color: AppColors.textSecondary)),
+                  return Center(
+                    child: Text('Aún no hay personas asignadas a este proyecto.', style: TextStyle(color: context.colors.textSecondary)),
                   );
                 }
                 return personasAsync.when(
@@ -64,9 +65,9 @@ class ProyectoEquipoTab extends ConsumerWidget {
                         return Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: AppColors.surface,
+                            color: context.colors.surface,
                             borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: AppColors.border),
+                            border: Border.all(color: context.colors.border),
                           ),
                           child: Row(
                             children: [
@@ -75,7 +76,7 @@ class ProyectoEquipoTab extends ConsumerWidget {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(persona?.nombre ?? 'Persona eliminada', style: Theme.of(context).textTheme.titleSmall),
-                                    Text(miembro.rolEnProyecto, style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
+                                    Text(miembro.rolEnProyecto, style: TextStyle(color: context.colors.textSecondary, fontSize: 13)),
                                   ],
                                 ),
                               ),
@@ -166,9 +167,9 @@ class _AgregarMiembroDialogState extends ConsumerState<_AgregarMiembroDialog> {
               personasAsync.when(
                 data: (personas) {
                   if (personas.isEmpty) {
-                    return const Text(
+                    return Text(
                       'Aún no hay personas en el directorio. Crea una desde la sección "Equipo".',
-                      style: TextStyle(color: AppColors.textSecondary),
+                      style: TextStyle(color: context.colors.textSecondary),
                     );
                   }
                   return DropdownButtonFormField<String>(

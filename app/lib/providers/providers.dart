@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/actividad_model.dart';
@@ -9,6 +10,7 @@ import '../models/credencial_model.dart';
 import '../models/cupon_model.dart';
 import '../models/documento_model.dart';
 import '../models/espacio_model.dart';
+import '../models/evento_model.dart';
 import '../models/persona_model.dart';
 import '../models/postulacion_fondo_model.dart';
 import '../models/proyecto_miembro_model.dart';
@@ -20,10 +22,12 @@ import '../services/credencial_service.dart';
 import '../services/cupones_service.dart';
 import '../services/documento_service.dart';
 import '../services/espacio_service.dart';
+import '../services/evento_service.dart';
 import '../services/fondo_service.dart';
 import '../services/persona_service.dart';
 import '../services/proyecto_service.dart';
 import '../services/socios_admin_service.dart';
+import '../services/theme_service.dart';
 
 /// --- Servicios (singletons de la app) ---
 
@@ -37,6 +41,8 @@ final proyectoServiceProvider = Provider<ProyectoService>((ref) => ProyectoServi
 
 final espacioServiceProvider = Provider<EspacioService>((ref) => EspacioService());
 
+final eventoServiceProvider = Provider<EventoService>((ref) => EventoService());
+
 final personaServiceProvider = Provider<PersonaService>((ref) => PersonaService());
 
 final fondoServiceProvider = Provider<FondoService>((ref) => FondoService());
@@ -46,6 +52,29 @@ final credencialServiceProvider = Provider<CredencialService>((ref) => Credencia
 final sociosAdminServiceProvider = Provider<SociosAdminService>((ref) => SociosAdminService());
 
 final cuponesServiceProvider = Provider<CuponesService>((ref) => CuponesService());
+
+final themeServiceProvider = Provider<ThemeService>((ref) => ThemeService());
+
+/// --- Modo claro/oscuro (agregado 2026-08-24) ---
+
+/// Controla el [ThemeMode] activo y lo persiste vía [ThemeService] cada vez
+/// que cambia. Se inicializa en `main()` con el valor ya cargado desde
+/// `SharedPreferences` (override del provider), para no mostrar un
+/// parpadeo con el modo por defecto antes de aplicar el guardado.
+class ThemeModeController extends StateNotifier<ThemeMode> {
+  ThemeModeController(this._service, [ThemeMode inicial = ThemeMode.dark]) : super(inicial);
+
+  final ThemeService _service;
+
+  Future<void> cambiar(ThemeMode mode) async {
+    state = mode;
+    await _service.guardar(mode);
+  }
+}
+
+final themeModeProvider = StateNotifierProvider<ThemeModeController, ThemeMode>((ref) {
+  return ThemeModeController(ref.watch(themeServiceProvider));
+});
 
 /// --- Autenticación ---
 
@@ -204,6 +233,25 @@ final fondoDetalleProvider =
 final rendicionesStreamProvider =
     StreamProvider.autoDispose.family<List<RendicionModel>, String>((ref, postulacionId) {
   return ref.watch(fondoServiceProvider).streamRendiciones(postulacionId);
+});
+
+/// --- Agenda de eventos (agregada 2026-08-18) ---
+///
+/// `null` en el filtro de proyecto representa "todos los proyectos" — mismo
+/// criterio que `filtroEstadoProvider` para las postulaciones de bandas.
+final filtroProyectoAgendaProvider = StateProvider<String?>((ref) => null);
+
+/// Día seleccionado y mes visible del calendario — agregado 2026-08-18 al
+/// sumar la vista de calendario interactivo (antes había un toggle "mostrar
+/// pasados", que dejó de tener sentido: con un calendario de verdad, se
+/// navega a cualquier mes pasado o futuro con las flechas, no hace falta un
+/// interruptor aparte).
+final diaSeleccionadoAgendaProvider = StateProvider<DateTime>((ref) => DateTime.now());
+final diaEnFocoAgendaProvider = StateProvider<DateTime>((ref) => DateTime.now());
+
+final eventosStreamProvider = StreamProvider.autoDispose<List<EventoModel>>((ref) {
+  final proyectoId = ref.watch(filtroProyectoAgendaProvider);
+  return ref.watch(eventoServiceProvider).streamEventos(proyectoId: proyectoId);
 });
 
 /// --- Documentación institucional ---

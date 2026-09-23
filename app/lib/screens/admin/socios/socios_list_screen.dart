@@ -1,8 +1,9 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../app/app_colors.dart';
+import '../../../app/app_palette.dart';
 import '../../../app/estado_colors.dart';
 import '../../../models/credencial_model.dart';
 import '../../../providers/providers.dart';
@@ -156,9 +157,9 @@ class _FilaSocio extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.colors.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: context.colors.border),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -199,7 +200,7 @@ class _FilaSocio extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   socio.email,
-                  style: const TextStyle(color: AppColors.textMuted, fontSize: 12),
+                  style: TextStyle(color: context.colors.textMuted, fontSize: 12),
                 ),
                 const SizedBox(height: 8),
                 Wrap(
@@ -210,12 +211,12 @@ class _FilaSocio extends StatelessWidget {
                     Pill(label: socio.estado.label, color: EstadoColors.credencial(socio.estado)),
                     Text(
                       '${socio.plan.label} · $montoFormateado/mes',
-                      style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                      style: TextStyle(color: context.colors.textSecondary, fontSize: 13),
                     ),
                     if (socio.proximoCobro != null)
                       Text(
                         'Próximo cobro: ${DateFormat('dd/MM/yyyy').format(socio.proximoCobro!)}',
-                        style: const TextStyle(color: AppColors.textMuted, fontSize: 12),
+                        style: TextStyle(color: context.colors.textMuted, fontSize: 12),
                       ),
                   ],
                 ),

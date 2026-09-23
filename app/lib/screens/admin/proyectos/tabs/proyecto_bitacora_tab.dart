@@ -1,9 +1,10 @@
-import 'package:file_picker/file_picker.dart';
+﻿import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../app/app_colors.dart';
+import '../../../../app/app_palette.dart';
 import '../../../../providers/providers.dart';
 
 /// Tab "Bitácora": registro cronológico de avances del proyecto, con
@@ -48,8 +49,8 @@ class ProyectoBitacoraTab extends ConsumerWidget {
             child: bitacoraAsync.when(
               data: (entradas) {
                 if (entradas.isEmpty) {
-                  return const Center(
-                    child: Text('Aún no hay entradas de bitácora.', style: TextStyle(color: AppColors.textSecondary)),
+                  return Center(
+                    child: Text('Aún no hay entradas de bitácora.', style: TextStyle(color: context.colors.textSecondary)),
                   );
                 }
                 return ListView.separated(
@@ -60,9 +61,9 @@ class ProyectoBitacoraTab extends ConsumerWidget {
                     return Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: AppColors.surface,
+                        color: context.colors.surface,
                         borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: AppColors.border),
+                        border: Border.all(color: context.colors.border),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -72,11 +73,11 @@ class ProyectoBitacoraTab extends ConsumerWidget {
                               Expanded(
                                 child: Text(
                                   entrada.fecha != null ? DateFormat('dd/MM/yyyy HH:mm').format(entrada.fecha!) : '—',
-                                  style: const TextStyle(color: AppColors.textMuted, fontSize: 12),
+                                  style: TextStyle(color: context.colors.textMuted, fontSize: 12),
                                 ),
                               ),
                               if (entrada.autorNombre != null)
-                                Text(entrada.autorNombre!, style: const TextStyle(color: AppColors.textMuted, fontSize: 12)),
+                                Text(entrada.autorNombre!, style: TextStyle(color: context.colors.textMuted, fontSize: 12)),
                               IconButton(
                                 icon: const Icon(Icons.delete_outline_rounded, size: 18),
                                 color: AppColors.rechazada,
@@ -85,7 +86,7 @@ class ProyectoBitacoraTab extends ConsumerWidget {
                             ],
                           ),
                           const SizedBox(height: 6),
-                          Text(entrada.texto, style: const TextStyle(color: AppColors.textPrimary)),
+                          Text(entrada.texto, style: TextStyle(color: context.colors.textPrimary)),
                           if (entrada.fotoUrls.isNotEmpty) ...[
                             const SizedBox(height: 12),
                             SizedBox(
@@ -199,7 +200,7 @@ class _NuevaEntradaDialogState extends ConsumerState<_NuevaEntradaDialog> {
               const SizedBox(height: 14),
               Container(
                 padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(border: Border.all(color: AppColors.border), borderRadius: BorderRadius.circular(12)),
+                decoration: BoxDecoration(border: Border.all(color: context.colors.border), borderRadius: BorderRadius.circular(12)),
                 child: Row(
                   children: [
                     const Icon(Icons.photo_library_outlined, color: AppColors.accent),

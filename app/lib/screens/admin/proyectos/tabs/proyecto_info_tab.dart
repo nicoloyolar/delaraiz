@@ -1,8 +1,9 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../app/app_colors.dart';
+import '../../../../app/app_palette.dart';
 import '../../../../models/proyecto_model.dart';
 import '../../../../providers/providers.dart';
 
@@ -88,18 +89,21 @@ class ProyectoInfoTab extends ConsumerWidget {
                 titulo: 'Datos generales',
                 child: Column(
                   children: [
-                    _fila('Tipo', proyecto.tipo),
-                    _fila('Descripción', proyecto.descripcion ?? '—'),
-                    _fila('Responsable', responsableNombre ?? 'Sin asignar'),
+                    _fila(context, 'Tipo', proyecto.tipo),
+                    _fila(context, 'Descripción', proyecto.descripcion ?? '—'),
+                    _fila(context, 'Responsable', responsableNombre ?? 'Sin asignar'),
                     _fila(
+                      context,
                       'Fecha de inicio',
                       proyecto.fechaInicio != null ? DateFormat('dd/MM/yyyy').format(proyecto.fechaInicio!) : '—',
                     ),
                     _fila(
+                      context,
                       'Fecha de término',
                       proyecto.fechaTermino != null ? DateFormat('dd/MM/yyyy').format(proyecto.fechaTermino!) : '—',
                     ),
                     _fila(
+                      context,
                       'Presupuesto estimado',
                       proyecto.presupuestoEstimado != null
                           ? NumberFormat.currency(locale: 'es_CL', symbol: '\$', decimalDigits: 0)
@@ -115,8 +119,8 @@ class ProyectoInfoTab extends ConsumerWidget {
                 icono: Icons.location_city_outlined,
                 titulo: 'Espacios asociados',
                 child: espaciosDelProyecto.isEmpty
-                    ? const Text('Este proyecto no tiene espacios asociados todavía.',
-                        style: TextStyle(color: AppColors.textSecondary))
+                    ? Text('Este proyecto no tiene espacios asociados todavía.',
+                        style: TextStyle(color: context.colors.textSecondary))
                     : Wrap(
                         spacing: 8,
                         runSpacing: 8,
@@ -138,7 +142,7 @@ class ProyectoInfoTab extends ConsumerWidget {
                         proyecto.aceptaPostulacionesBandas
                             ? 'El formulario público ("/") está recibiendo postulaciones para este proyecto.'
                             : 'El formulario público no está aceptando postulaciones para este proyecto.',
-                        style: const TextStyle(color: AppColors.textSecondary),
+                        style: TextStyle(color: context.colors.textSecondary),
                       ),
                     ),
                     Switch(
@@ -166,9 +170,9 @@ class ProyectoInfoTab extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: context.colors.surface,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: context.colors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -187,14 +191,14 @@ class ProyectoInfoTab extends ConsumerWidget {
     );
   }
 
-  Widget _fila(String etiqueta, String valor) {
+  Widget _fila(BuildContext context, String etiqueta, String valor) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(width: 160, child: Text(etiqueta, style: const TextStyle(color: AppColors.textMuted, fontSize: 13))),
-          Expanded(child: Text(valor, style: const TextStyle(color: AppColors.textPrimary))),
+          SizedBox(width: 160, child: Text(etiqueta, style: TextStyle(color: context.colors.textMuted, fontSize: 13))),
+          Expanded(child: Text(valor, style: TextStyle(color: context.colors.textPrimary))),
         ],
       ),
     );

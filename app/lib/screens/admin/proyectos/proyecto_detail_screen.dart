@@ -1,7 +1,7 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../app/app_colors.dart';
+import '../../../app/app_palette.dart';
 import '../../../app/estado_colors.dart';
 import '../../../providers/providers.dart';
 import '../../../widgets/pill.dart';
@@ -27,7 +27,7 @@ class ProyectoDetailScreen extends ConsumerWidget {
     final proyectoAsync = ref.watch(proyectoDetalleProvider(proyectoId));
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.colors.background,
       body: proyectoAsync.when(
         data: (proyecto) {
           if (proyecto == null) {
@@ -75,7 +75,7 @@ class _DetalleContenido extends StatelessWidget {
     return DefaultTabController(
       length: tabs.length,
       child: Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: context.colors.background,
         appBar: AppBar(
           title: Row(
             children: [

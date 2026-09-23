@@ -3,10 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../app/app_colors.dart';
+import '../app/app_palette.dart';
 import '../providers/providers.dart';
 
 /// Secciones disponibles en la navegación del panel administrativo.
-enum AdminRoute { resumen, proyectos, espacios, equipo, financiamiento, socios, cupones, documentos, configuracion }
+enum AdminRoute { resumen, proyectos, agenda, espacios, equipo, financiamiento, socios, cupones, documentos, configuracion }
 
 /// Layout compartido del panel admin: sidebar de navegación + contenido.
 /// Todas las pantallas de `/admin/*` se envuelven en este shell para que
@@ -20,7 +21,7 @@ class AdminShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.colors.background,
       body: LayoutBuilder(
         builder: (context, constraints) {
           final mostrarSidebar = constraints.maxWidth >= 900;
@@ -45,9 +46,9 @@ class _Sidebar extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return Container(
       width: 248,
-      decoration: const BoxDecoration(
-        color: AppColors.surface,
-        border: Border(right: BorderSide(color: AppColors.border)),
+      decoration: BoxDecoration(
+        color: context.colors.surface,
+        border: Border(right: BorderSide(color: context.colors.border)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -112,6 +113,12 @@ class _Sidebar extends ConsumerWidget {
                   onTap: () => context.go('/admin/proyectos'),
                 ),
                 _NavItem(
+                  icon: Icons.event_outlined,
+                  label: 'Agenda',
+                  activo: currentRoute == AdminRoute.agenda,
+                  onTap: () => context.go('/admin/agenda'),
+                ),
+                _NavItem(
                   icon: Icons.location_city_outlined,
                   label: 'Espacios',
                   activo: currentRoute == AdminRoute.espacios,
@@ -152,8 +159,12 @@ class _Sidebar extends ConsumerWidget {
             ),
           ),
           const Divider(height: 1),
+          const Padding(
+            padding: EdgeInsets.fromLTRB(12, 12, 12, 4),
+            child: _ThemeModeSwitcher(),
+          ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
+            padding: const EdgeInsets.fromLTRB(12, 4, 12, 4),
             child: _NavItem(
               icon: Icons.campaign_outlined,
               label: 'Formulario público',
@@ -182,6 +193,88 @@ class _Sidebar extends ConsumerWidget {
   }
 }
 
+/// Selector de modo claro/oscuro/sistema (agregado 2026-08-24) — 3 botones
+/// tipo segmented control, mismo criterio visual que el resto del sidebar.
+/// La elección se persiste sola (ver `themeModeProvider`/`ThemeService`).
+class _ThemeModeSwitcher extends ConsumerWidget {
+  const _ThemeModeSwitcher();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final modoActual = ref.watch(themeModeProvider);
+
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: context.colors.background,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: context.colors.border),
+      ),
+      child: Row(
+        children: [
+          _ThemeModeButton(
+            icon: Icons.light_mode_outlined,
+            tooltip: 'Modo claro',
+            activo: modoActual == ThemeMode.light,
+            onTap: () => ref.read(themeModeProvider.notifier).cambiar(ThemeMode.light),
+          ),
+          _ThemeModeButton(
+            icon: Icons.dark_mode_outlined,
+            tooltip: 'Modo oscuro',
+            activo: modoActual == ThemeMode.dark,
+            onTap: () => ref.read(themeModeProvider.notifier).cambiar(ThemeMode.dark),
+          ),
+          _ThemeModeButton(
+            icon: Icons.brightness_auto_outlined,
+            tooltip: 'Usar el del sistema',
+            activo: modoActual == ThemeMode.system,
+            onTap: () => ref.read(themeModeProvider.notifier).cambiar(ThemeMode.system),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ThemeModeButton extends StatelessWidget {
+  const _ThemeModeButton({
+    required this.icon,
+    required this.tooltip,
+    required this.activo,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String tooltip;
+  final bool activo;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Tooltip(
+        message: tooltip,
+        child: Material(
+          color: activo ? AppColors.accentSoft : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(8),
+            onTap: onTap,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Icon(
+                icon,
+                size: 18,
+                color: activo ? AppColors.accent : context.colors.textMuted,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _NavItem extends StatelessWidget {
   const _NavItem({
     required this.icon,
@@ -202,7 +295,7 @@ class _NavItem extends StatelessWidget {
     final habilitado = !proximamente;
     final color = activo
         ? AppColors.accent
-        : (habilitado ? AppColors.textSecondary : AppColors.textMuted);
+        : (habilitado ? context.colors.textSecondary : context.colors.textMuted);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
@@ -232,12 +325,12 @@ class _NavItem extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                     decoration: BoxDecoration(
-                      color: AppColors.surfaceElevated,
+                      color: context.colors.surfaceElevated,
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Text(
+                    child: Text(
                       'Pronto',
-                      style: TextStyle(fontSize: 10, color: AppColors.textMuted),
+                      style: TextStyle(fontSize: 10, color: context.colors.textMuted),
                     ),
                   ),
               ],

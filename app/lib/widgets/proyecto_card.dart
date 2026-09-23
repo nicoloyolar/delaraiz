@@ -1,7 +1,8 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../app/app_colors.dart';
+import '../app/app_palette.dart';
 import '../app/estado_colors.dart';
 import '../models/proyecto_model.dart';
 import 'pill.dart';
@@ -63,14 +64,14 @@ class ProyectoCard extends StatelessWidget {
               if (proyecto.tipo.isNotEmpty)
                 Text(
                   proyecto.tipo,
-                  style: theme.textTheme.bodySmall?.copyWith(color: AppColors.textSecondary),
+                  style: theme.textTheme.bodySmall?.copyWith(color: context.colors.textSecondary),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
               const Spacer(),
               Row(
                 children: [
-                  const Icon(Icons.event_outlined, size: 14, color: AppColors.textMuted),
+                  Icon(Icons.event_outlined, size: 14, color: context.colors.textMuted),
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
@@ -81,7 +82,7 @@ class ProyectoCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  const Icon(Icons.arrow_forward_rounded, size: 16, color: AppColors.textMuted),
+                  Icon(Icons.arrow_forward_rounded, size: 16, color: context.colors.textMuted),
                 ],
               ),
             ],

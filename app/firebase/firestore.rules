@@ -86,6 +86,14 @@ service cloud.firestore {
       }
     }
 
+    // --- Agenda de eventos (agregada 2026-08-18) ---
+    // Mismo criterio que /postulaciones_fondos: colección de nivel superior
+    // (no subcolección de /proyectos) para que la vista global de la Agenda
+    // pueda leerla de un solo tiro, filtrando por proyectoId si hace falta.
+    match /eventos/{eventoId} {
+      allow read, create, update, delete: if esAdminActivo();
+    }
+
     // --- Credencial digital de socios (agregado 2026-08-12) ---
     // El ID de cada documento es el correo del socio en minúsculas. Esta
     // colección la escribe ÚNICAMENTE el sitio PHP, mediante una cuenta de

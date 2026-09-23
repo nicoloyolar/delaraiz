@@ -1,8 +1,9 @@
-import 'package:file_picker/file_picker.dart';
+﻿import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../app/app_colors.dart';
+import '../app/app_palette.dart';
 import '../models/documento_model.dart';
 import '../providers/providers.dart';
 import '../utils/validators.dart';
@@ -122,7 +123,7 @@ class _SubirDocumentoDialogState extends ConsumerState<SubirDocumentoDialog> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    border: Border.all(color: AppColors.border),
+                    border: Border.all(color: context.colors.border),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(

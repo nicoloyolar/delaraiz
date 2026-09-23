@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/componente_model.dart';
 import '../models/credencial_model.dart';
+import '../models/evento_model.dart';
 import '../models/postulacion_fondo_model.dart';
 import '../models/proyecto_model.dart';
 import 'app_colors.dart';
@@ -67,6 +68,17 @@ class EstadoColors {
       case EstadoCredencial.cancelado:
         return AppColors.textMuted;
       case EstadoCredencial.rechazado:
+        return AppColors.rechazada;
+    }
+  }
+
+  static Color evento(EstadoEvento estado) {
+    switch (estado) {
+      case EstadoEvento.confirmado:
+        return AppColors.seleccionada;
+      case EstadoEvento.tentativo:
+        return AppColors.pendiente;
+      case EstadoEvento.cancelado:
         return AppColors.rechazada;
     }
   }
