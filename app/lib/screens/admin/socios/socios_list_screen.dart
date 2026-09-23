@@ -8,6 +8,7 @@ import '../../../app/estado_colors.dart';
 import '../../../models/credencial_model.dart';
 import '../../../providers/providers.dart';
 import '../../../widgets/pill.dart';
+import 'editar_socio_dialog.dart';
 
 /// Mantenedor de Socios del panel admin — agregado 2026-08-14. Muestra a
 /// todas las personas que han hecho aportes reales vía Flow (`/membresia/`
@@ -66,6 +67,18 @@ class SociosListScreen extends ConsumerWidget {
     }
   }
 
+  Future<void> _editar(BuildContext context, CredencialModel socio) async {
+    final guardado = await showDialog<bool>(
+      context: context,
+      builder: (_) => EditarSocioDialog(socio: socio),
+    );
+    if (guardado == true && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Datos actualizados.')),
+      );
+    }
+  }
+
   String _iniciales(String nombre) {
     final palabras = nombre.trim().split(RegExp(r'\s+'));
     final letras = palabras.take(2).map((p) => p.isNotEmpty ? p[0] : '').join();
@@ -120,6 +133,7 @@ class SociosListScreen extends ConsumerWidget {
                       socio: socio,
                       iniciales: _iniciales(socio.nombre),
                       montoFormateado: _formatoPesos(socio.montoMensual),
+                      onEditar: () => _editar(context, socio),
                       onCambiarEstado: (nuevoEstado, {requiereConfirmacion = false}) =>
                           _cambiarEstado(context, ref, socio, nuevoEstado,
                               requiereConfirmacion: requiereConfirmacion),
@@ -142,12 +156,14 @@ class _FilaSocio extends StatelessWidget {
     required this.socio,
     required this.iniciales,
     required this.montoFormateado,
+    required this.onEditar,
     required this.onCambiarEstado,
   });
 
   final CredencialModel socio;
   final String iniciales;
   final String montoFormateado;
+  final VoidCallback onEditar;
   final void Function(EstadoModeracion nuevoEstado, {bool requiereConfirmacion}) onCambiarEstado;
 
   @override
@@ -227,6 +243,11 @@ class _FilaSocio extends StatelessWidget {
                 ),
               ],
             ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.edit_outlined, size: 20),
+            tooltip: 'Editar nombre/email',
+            onPressed: onEditar,
           ),
           PopupMenuButton<EstadoModeracion>(
             icon: const Icon(Icons.more_vert_rounded, size: 20),

@@ -1380,3 +1380,98 @@ function cdlr_cupones_handle_eliminar() {
 }
 add_action( 'admin_post_cdlr_cupones_eliminar', 'cdlr_cupones_handle_eliminar' );
 add_action( 'admin_post_nopriv_cdlr_cupones_eliminar', 'cdlr_cupones_handle_eliminar' );
+
+
+/* ---------------------------------------------------------------------
+ * Editar nombre/email de un socio (agregado en la auditoría de pre-
+ * lanzamiento de base de datos, 2026-09-23) — hasta ahora no había NINGUNA
+ * forma de corregir un dato mal ingresado sin acceso directo al servidor.
+ *
+ * A propósito, solo nombre y email son editables — NO el plan: el plan
+ * está atado a una suscripción real en Flow, y cambiarlo acá sin también
+ * cambiar la suscripción en Flow dejaría el sitio mostrando un plan
+ * distinto al que Flow realmente cobra. Cambiar de plan de verdad es una
+ * tarea aparte (más adelante, si se pide) que necesitaría tocar la
+ * suscripción en Flow, no solo estos metadatos.
+ * ------------------------------------------------------------------ */
+
+/**
+ * Borra el documento viejo en Firestore cuando el email de un socio cambia
+ * — sin esto, el documento con el email anterior queda huérfano para
+ * siempre (cdlr_flow_sync_credencial_firestore() solo sabe hacer upsert al
+ * email actual, nunca limpia el anterior).
+ */
+function cdlr_flow_eliminar_credencial_firestore( $email ) {
+	if ( ! defined( 'CDLR_FIREBASE_PROJECT_ID' ) || ! defined( 'CDLR_FIREBASE_CLIENT_EMAIL' ) || ! defined( 'CDLR_FIREBASE_PRIVATE_KEY' ) ) {
+		return;
+	}
+	$access_token = cdlr_flow_firebase_access_token();
+	if ( is_wp_error( $access_token ) ) {
+		return;
+	}
+	$url = sprintf(
+		'https://firestore.googleapis.com/v1/projects/%s/databases/(default)/documents/credenciales/%s',
+		CDLR_FIREBASE_PROJECT_ID,
+		rawurlencode( strtolower( trim( $email ) ) )
+	);
+	wp_remote_request( $url, [
+		'method'  => 'DELETE',
+		'headers' => [ 'Authorization' => 'Bearer ' . $access_token ],
+		'timeout' => 15,
+	] );
+}
+
+/**
+ * Busca al socio por su email ACTUAL (antes de la edición) — la app Flutter
+ * solo conoce el email (Firestore no guarda el ID del post de WordPress),
+ * así que se identifica al socio por ese dato en vez de pedir un ID interno
+ * que la app no tiene.
+ *
+ * @return array{post_id:int}|WP_Error
+ */
+function cdlr_flow_editar_socio( $email_actual, $nombre, $email_nuevo ) {
+	if ( ! is_email( $email_actual ) ) {
+		return new WP_Error( 'cdlr_socio_datos_invalidos', 'Falta identificar al socio.' );
+	}
+	if ( '' === trim( (string) $nombre ) || ! is_email( $email_nuevo ) ) {
+		return new WP_Error( 'cdlr_socio_datos_invalidos', 'Revisa el nombre y el email.' );
+	}
+
+	$socio = cdlr_flow_find_socio_by_email( $email_actual );
+	if ( ! $socio ) {
+		return new WP_Error( 'cdlr_socio_no_encontrado', 'Socio no encontrado.' );
+	}
+
+	$email_nuevo = strtolower( trim( $email_nuevo ) );
+
+	wp_update_post( [ 'ID' => $socio->ID, 'post_title' => sanitize_text_field( $nombre ) ] );
+	update_post_meta( $socio->ID, '_cdlr_email', $email_nuevo );
+
+	// Si cambió el email, el documento en Firestore vive en otra ruta (el ID
+	// del documento ES el email) — hay que borrar el viejo antes de que el
+	// sync de abajo cree el nuevo, si no, queda uno huérfano con datos
+	// desactualizados que nadie vuelve a tocar.
+	if ( strtolower( trim( $email_actual ) ) !== $email_nuevo ) {
+		cdlr_flow_eliminar_credencial_firestore( $email_actual );
+	}
+
+	cdlr_flow_sync_credencial_firestore( $socio->ID );
+
+	return [ 'post_id' => $socio->ID ];
+}
+
+function cdlr_socios_handle_editar() {
+	cdlr_cupones_bootstrap(); // Genérico: CORS + exige admin activo — no es específico de cupones a pesar del nombre.
+
+	$email_actual = isset( $_POST['emailActual'] ) ? sanitize_email( wp_unslash( $_POST['emailActual'] ) ) : '';
+	$nombre       = isset( $_POST['nombre'] ) ? sanitize_text_field( wp_unslash( $_POST['nombre'] ) ) : '';
+	$email_nuevo  = isset( $_POST['email'] ) ? sanitize_email( wp_unslash( $_POST['email'] ) ) : '';
+
+	$result = cdlr_flow_editar_socio( $email_actual, $nombre, $email_nuevo );
+	if ( is_wp_error( $result ) ) {
+		wp_send_json_error( [ 'message' => $result->get_error_message() ], 400 );
+	}
+	wp_send_json_success( [ 'ok' => true ] );
+}
+add_action( 'admin_post_cdlr_socios_editar', 'cdlr_socios_handle_editar' );
+add_action( 'admin_post_nopriv_cdlr_socios_editar', 'cdlr_socios_handle_editar' );

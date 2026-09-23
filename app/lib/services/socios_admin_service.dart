@@ -1,4 +1,8 @@
+import 'dart:convert';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:http/http.dart' as http;
 
 import '../models/credencial_model.dart';
 
@@ -48,5 +52,48 @@ class SociosAdminService {
       'estadoModeracion': nuevoEstado.name,
       'estadoModeracionActualizadoEn': FieldValue.serverTimestamp(),
     });
+  }
+
+  /// Corrige nombre/email de un socio — agregado 2026-09-23 (auditoría de
+  /// pre-lanzamiento: antes no había NINGUNA forma de arreglar un typo sin
+  /// acceso directo al servidor). A diferencia del resto de este servicio,
+  /// esto NO escribe directo a Firestore: el dato real vive en WordPress
+  /// (`cdlr_socio`), así que se llama al sitio PHP (mismo patrón HTTP +
+  /// token de Firebase que `CuponesService`) para que sea WordPress quien
+  /// corrija su propio dato y vuelva a sincronizar Firestore — escribirlo
+  /// directo acá se habría perdido en el próximo cobro mensual, que vuelve a
+  /// sincronizar desde WordPress y pisa cualquier cambio hecho solo en
+  /// Firestore. A propósito NO permite cambiar el plan (ver comentario en
+  /// `cdlr_flow_editar_socio()` del lado PHP).
+  Future<void> editarDatos({
+    required String emailActual,
+    required String nombre,
+    required String emailNuevo,
+  }) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      throw StateError('No hay sesión iniciada.');
+    }
+    final idToken = await user.getIdToken();
+    if (idToken == null) {
+      throw StateError('No se pudo obtener el token de sesión.');
+    }
+
+    final response = await http.post(
+      Uri.parse('https://corporaciondelaraiz.cl/wp-admin/admin-post.php?action=cdlr_socios_editar'),
+      body: {
+        'emailActual': emailActual,
+        'nombre': nombre,
+        'email': emailNuevo,
+        'id_token': idToken,
+      },
+    );
+    final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+    if (decoded['success'] != true) {
+      final message = (decoded['data'] is Map)
+          ? (decoded['data']['message'] as String? ?? 'Error desconocido')
+          : 'Error desconocido';
+      throw Exception(message);
+    }
   }
 }
