@@ -473,19 +473,13 @@ function cdlr_flow_handle_subscribe() {
 		exit;
 	};
 
-	// TEMPORAL (2026-08-04): logging de diagnóstico para la primera prueba
-	// real del equipo directivo — se sacó un intento y dio error sin nada en
-	// el log (los checks de abajo no logueaban nada antes). Quitar estas
-	// líneas de error_log una vez confirmado el flujo completo.
 	if ( ! isset( $_POST['cdlr_flow_nonce'] ) || ! wp_verify_nonce( $_POST['cdlr_flow_nonce'], 'cdlr_flow_subscribe' ) ) {
-		error_log( '[CDLR Flow][debug] Falló el nonce. Recibido: ' . wp_json_encode( $_POST['cdlr_flow_nonce'] ?? null ) );
 		$fail( 'No pudimos validar el formulario, intenta de nuevo.' );
 		return;
 	}
 
 	// Honeypot: los bots suelen completar todos los campos, incluido este, que está oculto para personas.
 	if ( ! empty( $_POST['cdlr_website'] ) ) {
-		error_log( '[CDLR Flow][debug] Honeypot disparado. Valor: ' . wp_json_encode( $_POST['cdlr_website'] ) );
 		$fail( 'No se pudo procesar la postulación.' );
 		return;
 	}
@@ -499,12 +493,10 @@ function cdlr_flow_handle_subscribe() {
 	$es_personalizado     = ( 'personalizado' === $plan_slug );
 
 	if ( '' === $name || ! is_email( $email ) || ( ! $es_personalizado && ! isset( $plans[ $plan_slug ] ) ) ) {
-		error_log( '[CDLR Flow][debug] Falló validación de campos. name=' . wp_json_encode( $name ) . ' email=' . wp_json_encode( $email ) . ' plan_slug=' . wp_json_encode( $plan_slug ) );
 		$fail( 'Revisa tu nombre, tu email y el plan elegido.' );
 		return;
 	}
 	if ( $es_personalizado && $monto_personalizado < 1000 ) {
-		error_log( '[CDLR Flow][debug] Monto personalizado inválido: ' . wp_json_encode( $monto_personalizado ) );
 		$fail( 'Ingresa un monto de al menos $1.000.' );
 		return;
 	}
@@ -515,7 +507,6 @@ function cdlr_flow_handle_subscribe() {
 	if ( '' !== $cupon_codigo ) {
 		$cupon = cdlr_flow_validar_codigo_cupon( $cupon_codigo );
 		if ( is_wp_error( $cupon ) ) {
-			error_log( '[CDLR Flow][debug] Cupón inválido: ' . $cupon->get_error_message() );
 			$fail( $cupon->get_error_message() );
 			return;
 		}
@@ -523,7 +514,6 @@ function cdlr_flow_handle_subscribe() {
 
 	$customer = cdlr_flow_get_or_create_customer( $name, $email );
 	if ( is_wp_error( $customer ) ) {
-		error_log( '[CDLR Flow][debug] Falló get_or_create_customer: ' . $customer->get_error_message() );
 		$fail( 'No pudimos conectar con Flow, intenta de nuevo en unos minutos.' );
 		return;
 	}
@@ -531,7 +521,6 @@ function cdlr_flow_handle_subscribe() {
 	if ( $es_personalizado ) {
 		$plan_id_real = cdlr_flow_crear_plan_monto_personalizado( $monto_personalizado );
 		if ( is_wp_error( $plan_id_real ) ) {
-			error_log( '[CDLR Flow][debug] Falló crear_plan_monto_personalizado: ' . $plan_id_real->get_error_message() );
 			$fail( 'No pudimos crear tu plan de aporte, intenta de nuevo en unos minutos.' );
 			return;
 		}
@@ -557,7 +546,6 @@ function cdlr_flow_handle_subscribe() {
 	] );
 
 	if ( is_wp_error( $register ) || empty( $register['url'] ) || empty( $register['token'] ) ) {
-		error_log( '[CDLR Flow][debug] customer/register no devolvió url/token. Respuesta: ' . wp_json_encode( $register ) );
 		$fail( 'No pudimos iniciar el pago con Flow, intenta de nuevo en unos minutos.' );
 		return;
 	}
@@ -651,6 +639,19 @@ function cdlr_flow_complete_signup_for_socio( $socio, $flow_token ) {
 		update_post_meta( $socio->ID, '_cdlr_next_charge_date', $subscription['next_invoice_date'] );
 	}
 
+	// Fecha real de activación — antes no quedaba registrada en ningún lado
+	// (ni acá ni en Firestore/la app), solo existía la fecha de creación del
+	// post en WordPress, que no siempre coincide (ej. si el socio volvió
+	// recién con el cron de reconciliación 48h después). Se necesita un dato
+	// real para el beneficio de "regalo de aniversario a los 12 meses" de
+	// Embajador. Se guarda una sola vez — si por lo que sea esta función se
+	// vuelve a ejecutar (no debería, hay un guard clause más arriba), no se
+	// pisa la fecha real de la primera activación. Encontrado y corregido en
+	// la auditoría de pre-lanzamiento, 2026-09-23.
+	if ( ! get_post_meta( $socio->ID, '_cdlr_activado_en', true ) ) {
+		update_post_meta( $socio->ID, '_cdlr_activado_en', gmdate( 'Y-m-d\TH:i:s\Z' ) );
+	}
+
 	// El uso del cupón se cuenta acá (suscripción real ya creada en Flow),
 	// no al validarlo en el formulario — si alguien escribe el código pero
 	// nunca termina de pagar, no debería consumir un cupo del cupón.
@@ -694,17 +695,17 @@ function cdlr_flow_send_confirmation_emails( $socio_id ) {
 	$plan_label = isset( $plans[ $plan_slug ] ) ? $plans[ $plan_slug ]['label'] : $plan_slug;
 
 	wp_mail(
-		'corporaciondelaraiz@gmail.com',
+		'contacto@corporaciondelaraiz.cl',
 		sprintf( 'Nueva membresía activa – %s (%s)', $name, $plan_label ),
 		sprintf( "Nombre: %s\nEmail: %s\nPlan: %s\n", $name, $email, $plan_label ),
-		[ 'Content-Type: text/plain; charset=UTF-8' ]
+		[ 'Content-Type: text/plain; charset=UTF-8', 'Cc: corporaciondelaraiz@gmail.com' ]
 	);
 
 	wp_mail(
 		$email,
 		'¡Tu membresía está activa! – Corporación de la Raíz',
 		sprintf(
-			"¡Hola %s!\n\nTu membresía %s ya está activa. El cobro es automático cada mes a la tarjeta que registraste, a través de Flow.\n\nSi necesitas cancelar o cambiar de plan, escríbenos a corporaciondelaraiz@gmail.com.\n\nGracias por sumarte,\nCorporación de la Raíz",
+			"¡Hola %s!\n\nTu membresía %s ya está activa. El cobro es automático cada mes a la tarjeta que registraste, a través de Flow.\n\nSi necesitas cancelar o cambiar de plan, escríbenos a contacto@corporaciondelaraiz.cl.\n\nGracias por sumarte,\nCorporación de la Raíz",
 			$name,
 			$plan_label
 		),
@@ -757,10 +758,10 @@ function cdlr_flow_handle_webhook() {
 		// Es dinero real cambiando de manos sin que el sitio se entere — no
 		// puede perderse en silencio, se avisa además del error_log.
 		wp_mail(
-			'corporaciondelaraiz@gmail.com',
+			'contacto@corporaciondelaraiz.cl',
 			'⚠️ Webhook de Flow sin socio asociado',
 			'Llegó una notificación de Flow que no se pudo asociar a ningún socio registrado en el sitio. Revisar error_log del servidor. Payload: ' . wp_json_encode( $_REQUEST ),
-			[ 'Content-Type: text/plain; charset=UTF-8' ]
+			[ 'Content-Type: text/plain; charset=UTF-8', 'Cc: corporaciondelaraiz@gmail.com' ]
 		);
 		status_header( 200 );
 		exit;
@@ -791,7 +792,7 @@ function cdlr_flow_handle_webhook() {
 			wp_mail(
 				$email,
 				'No pudimos procesar tu cobro mensual – Corporación de la Raíz',
-				"Hola,\n\nNo pudimos procesar el cobro automático de tu membresía este mes. Flow va a reintentar automáticamente en los próximos días — si el problema persiste, escríbenos a corporaciondelaraiz@gmail.com para actualizar tu medio de pago.\n\nGracias,\nCorporación de la Raíz",
+				"Hola,\n\nNo pudimos procesar el cobro automático de tu membresía este mes. Flow va a reintentar automáticamente en los próximos días — si el problema persiste, escríbenos a contacto@corporaciondelaraiz.cl para actualizar tu medio de pago.\n\nGracias,\nCorporación de la Raíz",
 				[ 'Content-Type: text/plain; charset=UTF-8' ]
 			);
 		}
@@ -997,6 +998,14 @@ function cdlr_flow_sync_credencial_firestore( $socio_id ) {
 	}
 	if ( $next_charge ) {
 		$fields['proximoCobro'] = [ 'timestampValue' => gmdate( 'Y-m-d\TH:i:s\Z', strtotime( $next_charge ) ) ];
+	}
+	// Fecha real de activación (agregada en la auditoría de pre-lanzamiento,
+	// 2026-09-23) — ver el comentario junto a donde se guarda, en
+	// cdlr_flow_complete_signup_for_socio(). Ya viene en el formato que pide
+	// Firestore (gmdate con \Z), no hace falta reformatear como _cdlr_next_charge_date.
+	$activado_en = get_post_meta( $socio_id, '_cdlr_activado_en', true );
+	if ( $activado_en ) {
+		$fields['activadoEn'] = [ 'timestampValue' => $activado_en ];
 	}
 
 	// PATCH sobre la ruta del documento hace "upsert" (crea si no existe) en
@@ -1204,10 +1213,18 @@ function cdlr_cupones_cors_headers() {
 	$origenes_permitidos = [
 		'https://delaraiz-app.web.app',
 		'https://delaraiz-app.firebaseapp.com',
-		'http://localhost:8765', // flutter run -d chrome, para probar en local
 	];
 	$origen = $_SERVER['HTTP_ORIGIN'] ?? '';
-	if ( in_array( $origen, $origenes_permitidos, true ) ) {
+	// `flutter run -d chrome` sin `--web-port` fijo elige un puerto al azar
+	// cada vez (confirmado 2026-08-24: quedó en 62145, no el 8765 que se
+	// había fijado a mano en una sesión anterior) — en vez de perseguir un
+	// puerto fijo, se acepta cualquier `http://localhost:<puerto>` o
+	// `http://127.0.0.1:<puerto>`. Sigue siendo seguro: este CORS solo
+	// decide quién puede LEER la respuesta desde el navegador, el endpoint
+	// igual exige un token de Firebase de un admin real
+	// (cdlr_flow_verificar_admin_request()) sin importar el origen.
+	$es_localhost_dev = (bool) preg_match( '#^https?://(localhost|127\.0\.0\.1):\d+$#', $origen );
+	if ( in_array( $origen, $origenes_permitidos, true ) || $es_localhost_dev ) {
 		header( 'Access-Control-Allow-Origin: ' . $origen );
 	}
 	header( 'Access-Control-Allow-Methods: POST' );

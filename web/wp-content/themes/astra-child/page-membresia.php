@@ -90,6 +90,10 @@ $status = isset( $_GET['cdlr_status'] ) ? sanitize_key( wp_unslash( $_GET['cdlr_
 				</article>
 
 			</div>
+
+			<p class="cdlr-plans__custom" data-reveal>
+				¿Quieres aportar un monto distinto? <button type="button" class="cdlr-btn cdlr-btn--link" id="cdlr-plan-custom-btn" data-plan="personalizado" data-plan-label="Monto personalizado">Elige tu propio monto <?php echo cdlr_icon( 'arrow-right' ); ?></button>
+			</p>
 		</div>
 	</section>
 
@@ -115,11 +119,11 @@ $status = isset( $_GET['cdlr_status'] ) ? sanitize_key( wp_unslash( $_GET['cdlr_
 				</details>
 				<details class="cdlr-faq__item">
 					<summary>¿Cómo se realiza el pago mensual?</summary>
-					<p>Se cobra automáticamente cada mes a la tarjeta que registras al postular, a través de Flow. Puedes escribirnos a corporaciondelaraiz@gmail.com para cancelar o cambiar de plan cuando quieras.</p>
+					<p>Se cobra automáticamente cada mes a la tarjeta que registras al postular, a través de Flow. Puedes escribirnos a contacto@corporaciondelaraiz.cl para cancelar o cambiar de plan cuando quieras.</p>
 				</details>
 				<details class="cdlr-faq__item">
 					<summary>¿Puedo aportar con un monto distinto a los planes?</summary>
-					<p>Por supuesto. Cuéntanos en el formulario y buscamos la forma de sumarte al movimiento.</p>
+					<p>Sí. Debajo de los 3 planes hay un link "Elige tu propio monto" — te lleva al mismo formulario, pero con el monto mensual que tú definas.</p>
 				</details>
 			</div>
 		</div>
@@ -135,7 +139,13 @@ $status = isset( $_GET['cdlr_status'] ) ? sanitize_key( wp_unslash( $_GET['cdlr_
 			</div>
 
 			<div class="cdlr-cta__form-wrap" data-reveal>
-				<form class="cdlr-form" id="cdlr-contact-form" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" novalidate>
+				<?php /* id distinto a "cdlr-contact-form" a propósito: ese ID lo intercepta
+				initContactForm() en premium.js, que espera una respuesta JSON — pero este
+				formulario responde con una redirección a Flow, no JSON. Compartir el ID
+				causaba que cada envío disparara 2 llamadas reales a customer/register de
+				Flow (una AJAX descartada al fallar el parseo JSON, y el envío normal de
+				respaldo que sí funciona) — bug real encontrado y corregido 2026-09-23. */ ?>
+				<form class="cdlr-form" id="cdlr-membresia-form" method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" novalidate>
 					<input type="hidden" name="action" value="cdlr_flow_subscribe">
 					<input type="hidden" name="cdlr_plan" id="cdlr_plan" value="">
 					<?php wp_nonce_field( 'cdlr_flow_subscribe', 'cdlr_flow_nonce' ); ?>
@@ -151,6 +161,16 @@ $status = isset( $_GET['cdlr_status'] ) ? sanitize_key( wp_unslash( $_GET['cdlr_
 					<div class="cdlr-field">
 						<label for="cdlr_email_mem">Email</label>
 						<input type="email" id="cdlr_email_mem" name="cdlr_email" placeholder="Ingresa tu email" required>
+					</div>
+
+					<div class="cdlr-field" id="cdlr-monto-personalizado-wrap" hidden>
+						<label for="cdlr_monto_personalizado_input">¿Cuánto quieres aportar al mes?</label>
+						<input type="number" id="cdlr_monto_personalizado_input" name="cdlr_monto_personalizado" min="1000" step="500" placeholder="Ej: 7000">
+					</div>
+
+					<div class="cdlr-field">
+						<label for="cdlr_cupon_mem">Cupón de descuento (opcional)</label>
+						<input type="text" id="cdlr_cupon_mem" name="cdlr_cupon" placeholder="Si tienes un código, escríbelo acá">
 					</div>
 
 					<button type="submit" class="cdlr-btn cdlr-btn--primary cdlr-form__submit">Ir a pagar con Flow</button>

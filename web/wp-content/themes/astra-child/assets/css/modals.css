@@ -32,7 +32,12 @@
 	max-width: 34rem;
 	max-height: 90vh;
 	overflow-y: auto;
-	background: var(--cdlr-surface-dark);
+	/* --cdlr-ink (negro de marca), no --cdlr-surface-dark (azul-grisáceo
+	 * pensado para el fondo de .cdlr-form) — con ese tono el popup se veía
+	 * desentonado del resto del sitio (negro + naranjo en todas partes).
+	 * Corregido 2026-08-25. */
+	background: var(--cdlr-ink);
+	border: 1px solid var(--cdlr-accent);
 	border-radius: var(--radius, 16px);
 	padding: clamp(1.75rem, 4vw, 2.5rem);
 	color: #fff;
@@ -47,7 +52,15 @@
 .cdlr-modal--wide .cdlr-modal__panel {
 	max-width: 62rem;
 }
-.cdlr-modal__close {
+/* Selector con el ancestro (.cdlr-modal .cdlr-modal__close), no la clase
+ * sola — es un <button> nativo, y algún estilo genérico de botones de Astra
+ * le estaba ganando al fondo naranjo/gris sutil de acá abajo (se veía azul
+ * en producción, tanto en reposo como en hover). Con más especificidad no
+ * hace falta !important. Corregido 2026-08-25 a pedido del usuario: naranjo
+ * de marca en reposo (antes era un gris casi invisible) y naranjo más
+ * oscuro al pasar el mouse (antes saltaba al naranjo brillante, mismo tono
+ * que el de reposo nuevo — no se notaba el cambio). */
+.cdlr-modal .cdlr-modal__close {
 	position: absolute;
 	top: 1rem;
 	right: 1rem;
@@ -58,15 +71,16 @@
 	justify-content: center;
 	border-radius: 50%;
 	border: 0;
-	background: rgba(255, 255, 255, 0.08);
+	background: var(--cdlr-accent);
 	color: #fff;
 	font-size: 1.4rem;
 	line-height: 1;
 	cursor: pointer;
 	transition: background-color 0.2s ease;
 }
-.cdlr-modal__close:hover {
-	background: var(--cdlr-accent);
+.cdlr-modal .cdlr-modal__close:hover,
+.cdlr-modal .cdlr-modal__close:focus-visible {
+	background: var(--cdlr-accent-2);
 }
 .cdlr-modal__title {
 	font-family: var(--font-display);
@@ -74,6 +88,7 @@
 	font-size: 1.5rem;
 	margin: 0 0 0.6rem;
 	padding-right: 2rem;
+	color: #fff;
 }
 .cdlr-modal__lead {
 	font-family: var(--font-body);
@@ -156,7 +171,11 @@
 	display: flex;
 	flex-direction: column;
 	gap: 0.6rem;
-	background: rgba(255, 255, 255, 0.04);
+	/* #1a1a1a: misma superficie elevada que usa .cdlr-plan--featured en
+	 * membresia.css (no un overlay casi invisible como antes) — para que
+	 * estas tarjetas resumidas se vean como una versión mini de las reales,
+	 * no como algo distinto. */
+	background: #1a1a1a;
 	border: 1px solid var(--cdlr-accent);
 	border-radius: var(--radius, 16px);
 	padding: 1.25rem;
@@ -182,12 +201,17 @@
 	text-transform: uppercase;
 	font-size: 1rem;
 	margin: 0;
+	/* Color fijo, no heredado — sobre fondo casi negro (#1a1a1a) no alcanza
+	 * con confiar en la herencia del panel, se vio "demasiado oscuro" en
+	 * producción. Corregido 2026-08-25. */
+	color: #fff;
 }
 .cdlr-popup-tier__price {
 	font-family: var(--font-display);
 	font-weight: 700;
 	font-size: 1.3rem;
 	margin: 0;
+	color: #fff;
 }
 .cdlr-popup-tier__price span {
 	font-family: var(--font-body);

@@ -130,10 +130,41 @@ function cdlr_header_menu_fallback( $args ) {
  */
 function cdlr_social_links() {
 	return [
-		'instagram' => [ 'label' => 'Instagram', 'icon' => 'instagram', 'url' => '' ],
-		'tiktok'    => [ 'label' => 'TikTok', 'icon' => 'tiktok', 'url' => '' ],
-		'youtube'   => [ 'label' => 'YouTube', 'icon' => 'youtube', 'url' => '' ],
-		'whatsapp'  => [ 'label' => 'WhatsApp', 'icon' => 'whatsapp', 'url' => '' ],
+		// URLs reales confirmadas el 2026-08-25 (el usuario cruzó las
+		// etiquetas al pasarlas — dijo "youtube" para el link de
+		// instagram.com y viceversa; se usó el dominio real de cada URL,
+		// no la etiqueta, para no publicar el link equivocado).
+		'instagram' => [ 'label' => 'Instagram', 'icon' => 'instagram', 'url' => 'https://www.instagram.com/corporaciondelaraiz' ],
+		'youtube'   => [ 'label' => 'YouTube', 'icon' => 'youtube', 'url' => 'https://www.youtube.com/@delaraiztv1115' ],
+		// Sin TikTok a propósito: el usuario confirmó que la Corporación no
+		// tiene cuenta — se saca del array (no un 'url' vacío) para que no
+		// aparezca ni siquiera el ícono de "próximamente", que sería
+		// engañoso (implicaría que viene, y no es el caso).
+		'whatsapp'  => [ 'label' => 'WhatsApp', 'icon' => 'whatsapp', 'url' => 'https://wa.me/56997143870' ],
+	];
+}
+
+/**
+ * Marcas/aliados que ya colaboran con la Corporación, para la franja de
+ * logos de `/alianzas/` ("Trabajemos juntos"). Vacío a propósito: los logos
+ * reales (14 auspiciadores del dossier, ver PROYECTO.md sección 4) todavía
+ * no están disponibles — page-alianzas.php oculta la franja completa
+ * mientras este array esté vacío, mismo criterio que cdlr_social_links()
+ * con el footer (nunca mostrar una sección a medio llenar).
+ *
+ * Para agregar uno: ['nombre' => 'Nombre de la marca', 'logo_id' => <ID de
+ * adjunto ya subido a Medios>, 'url' => 'https://sitio-de-la-marca.cl' (opcional)].
+ */
+function cdlr_alianzas_logos() {
+	return [
+		[ 'nombre' => 'SONO', 'logo_id' => 393 ],
+		[ 'nombre' => 'Cuartel del Músico', 'logo_id' => 389 ],
+		[ 'nombre' => 'Cervecería Crápula', 'logo_id' => 390 ],
+		[ 'nombre' => 'CL Audio', 'logo_id' => 388 ],
+		[ 'nombre' => 'APHILL Diseño y Publicidad', 'logo_id' => 391 ],
+		[ 'nombre' => 'Ríos Mecánica Automotriz', 'logo_id' => 392 ],
+		[ 'nombre' => 'Strato Craft Beer', 'logo_id' => 394 ],
+		[ 'nombre' => 'KR Estampados Personalizados', 'logo_id' => 395 ],
 	];
 }
 
@@ -166,7 +197,7 @@ function cdlr_render_footer() {
 			<div class="cdlr-footer__col">
 				<h2 class="cdlr-footer__heading">Contacto</h2>
 				<ul class="cdlr-footer__links">
-					<li><a href="mailto:corporaciondelaraiz@gmail.com">corporaciondelaraiz@gmail.com</a></li>
+					<li><a href="mailto:contacto@corporaciondelaraiz.cl">contacto@corporaciondelaraiz.cl</a></li>
 					<li>Concepción, Chile</li>
 				</ul>
 			</div>
@@ -200,6 +231,29 @@ function cdlr_render_footer() {
 	</footer>
 	<?php
 }
+
+/**
+ * Botón flotante de WhatsApp — reemplaza el "subir arriba" nativo de Astra
+ * (`#ast-scroll-top`, oculto en header.css) en el mismo lugar de la
+ * pantalla. Se agregó el 2026-08-25 a pedido del usuario. Reutiliza
+ * `cdlr_social_links()['whatsapp']['url']` — mismo dato que ya usa la
+ * columna "Síguenos" del footer, no un número aparte — así que se activa
+ * solo apenas se complete esa URL (sigue vacía hoy, ver PROYECTO.md
+ * Pendientes): mientras no haya un número real, no se dibuja nada, en vez
+ * de mostrar un botón que no lleva a ningún lado.
+ */
+add_action( 'wp_footer', function () {
+	$whatsapp_url = cdlr_social_links()['whatsapp']['url'] ?? '';
+	if ( ! $whatsapp_url ) {
+		return;
+	}
+	?>
+	<a class="cdlr-whatsapp-fab" href="<?php echo esc_url( $whatsapp_url ); ?>" target="_blank" rel="noopener">
+		<?php echo cdlr_icon( 'whatsapp' ); ?>
+		<span class="screen-reader-text">Escríbenos por WhatsApp</span>
+	</a>
+	<?php
+} );
 
 /**
  * Modales sitewide: postulación de banda y el popup de membresía que aparece
@@ -418,10 +472,10 @@ function cdlr_handle_band_application() {
 	}
 
 	$sent = wp_mail(
-		'corporaciondelaraiz@gmail.com',
+		'contacto@corporaciondelaraiz.cl',
 		$subject,
 		implode( "\n", $lines ),
-		[ 'Content-Type: text/plain; charset=UTF-8', sprintf( 'Reply-To: %s <%s>', $banda, $email ) ]
+		[ 'Content-Type: text/plain; charset=UTF-8', 'Cc: corporaciondelaraiz@gmail.com', sprintf( 'Reply-To: %s <%s>', $banda, $email ) ]
 	);
 
 	if ( ! $sent ) {
@@ -499,10 +553,11 @@ add_action( 'wp_enqueue_scripts', function () {
 	$is_grua      = is_page( 'la-grua-del-rock' );
 	$is_quienes   = is_page( 'quienes-somos' );
 	$is_practicas = is_page( 'practicas' );
+	$is_alianzas  = is_page( 'alianzas' );
 	$is_noticias  = is_home(); // La página de entradas (home.php) — is_home(), no is_page(), porque WP la trata como el índice del blog, no como una Página normal.
 	$is_single    = is_single(); // Una entrada individual (single.php).
 
-	if ( ! $is_home && ! $is_membresia && ! $is_grua && ! $is_quienes && ! $is_practicas && ! $is_noticias && ! $is_single ) {
+	if ( ! $is_home && ! $is_membresia && ! $is_grua && ! $is_quienes && ! $is_practicas && ! $is_alianzas && ! $is_noticias && ! $is_single ) {
 		return;
 	}
 
@@ -517,8 +572,9 @@ add_action( 'wp_enqueue_scripts', function () {
 	] );
 
 	// membresia.css trae el hero sin foto (.cdlr-mem-hero) y las tarjetas de
-	// plan (.cdlr-plan*) que también reutilizan Quiénes somos y Prácticas.
-	if ( $is_membresia || $is_quienes || $is_practicas ) {
+	// plan (.cdlr-plan*) que también reutilizan Quiénes somos, Prácticas y
+	// Alianzas (esta última solo el hero, no las tarjetas de plan).
+	if ( $is_membresia || $is_quienes || $is_practicas || $is_alianzas ) {
 		$membresia_css_path = get_stylesheet_directory() . '/assets/css/membresia.css';
 		wp_enqueue_style( 'cdlr-membresia', get_stylesheet_directory_uri() . '/assets/css/membresia.css', [ 'cdlr-premium' ], file_exists( $membresia_css_path ) ? filemtime( $membresia_css_path ) : null );
 	}
@@ -541,6 +597,11 @@ add_action( 'wp_enqueue_scripts', function () {
 		wp_enqueue_style( 'cdlr-quienes', get_stylesheet_directory_uri() . '/assets/css/quienes-somos.css', [ 'cdlr-membresia' ], file_exists( $quienes_css_path ) ? filemtime( $quienes_css_path ) : null );
 	}
 
+	if ( $is_alianzas ) {
+		$alianzas_css_path = get_stylesheet_directory() . '/assets/css/alianzas.css';
+		wp_enqueue_style( 'cdlr-alianzas', get_stylesheet_directory_uri() . '/assets/css/alianzas.css', [ 'cdlr-membresia' ], file_exists( $alianzas_css_path ) ? filemtime( $alianzas_css_path ) : null );
+	}
+
 	if ( $is_noticias ) {
 		$noticias_css_path = get_stylesheet_directory() . '/assets/css/noticias.css';
 		wp_enqueue_style( 'cdlr-noticias', get_stylesheet_directory_uri() . '/assets/css/noticias.css', [ 'cdlr-premium' ], file_exists( $noticias_css_path ) ? filemtime( $noticias_css_path ) : null );
@@ -559,35 +620,47 @@ add_action( 'wp_enqueue_scripts', function () {
  * sitio, no genérica.
  */
 add_action( 'wp_head', function () {
+	// Los `$image_id` de acá abajo (397/398/399/400) son recortes horizontales
+	// dedicados a compartir en redes — agregados el 2026-08-25 porque las
+	// fotos originales (58/52/56, fotos de celular) y el logo (57) son
+	// verticales o casi cuadrados, y WhatsApp/Facebook los mostraban muy
+	// chicos/recortados raro en la vista previa del link. Las fotos
+	// originales se siguen usando tal cual en el resto de cada página (hero,
+	// etc.), esto solo cambia la imagen que se comparte al pegar el link.
 	if ( is_front_page() ) {
 		$title       = 'Corporación de la Raíz — Transformamos las calles en escenarios';
 		$description = 'Corporación cultural sin fines de lucro que impulsa la escena musical emergente de Concepción a través de festivales, producción audiovisual y La Grúa del Rock, nuestro escenario móvil insignia.';
-		$image_id    = 58;
+		$image_id    = 397;
 		$url         = home_url( '/' );
 	} elseif ( is_page( 'membresia' ) ) {
 		$title       = 'Membresía — Corporación de la Raíz';
 		$description = 'Elige tu plan de membresía y ayuda a financiar los shows gratuitos y La Grúa del Rock en Concepción.';
-		$image_id    = 58;
+		$image_id    = 397;
 		$url         = home_url( '/membresia/' );
 	} elseif ( is_page( 'la-grua-del-rock' ) ) {
 		$title       = 'La Grúa del Rock — Corporación de la Raíz';
 		$description = 'Un escenario móvil que recorre las calles de Concepción con bandas locales tocando en vivo, directo para quien vaya pasando.';
-		$image_id    = 52;
+		$image_id    = 398;
 		$url         = home_url( '/la-grua-del-rock/' );
 	} elseif ( is_page( 'quienes-somos' ) ) {
 		$title       = 'Quiénes somos — Corporación de la Raíz';
 		$description = 'Conoce a la corporación cultural sin fines de lucro que impulsa la escena musical emergente de Concepción, y al equipo detrás de La Grúa del Rock.';
-		$image_id    = 57;
+		$image_id    = 399;
 		$url         = home_url( '/quienes-somos/' );
 	} elseif ( is_page( 'practicas' ) ) {
 		$title       = 'Prácticas profesionales — Corporación de la Raíz';
 		$description = 'Practica en sonido, producción audiovisual o apoyo general a la gestión de la Corporación de la Raíz en Concepción.';
-		$image_id    = 56;
+		$image_id    = 400;
 		$url         = home_url( '/practicas/' );
+	} elseif ( is_page( 'alianzas' ) ) {
+		$title       = 'Trabajemos juntos — Corporación de la Raíz';
+		$description = 'Súmate como marca aliada a los proyectos de la Corporación de la Raíz en Concepción, incluyendo La Grúa del Rock.';
+		$image_id    = 398;
+		$url         = home_url( '/alianzas/' );
 	} elseif ( is_home() ) {
 		$title       = 'Noticias — Corporación de la Raíz';
 		$description = 'Recaps de shows, novedades de nuestros proyectos y todo lo que va pasando en la escena musical de Concepción.';
-		$image_id    = 58;
+		$image_id    = 397;
 		$url         = home_url( '/noticias/' );
 	} elseif ( is_single() ) {
 		// Cada entrada usa su propio título/extracto/imagen destacada en vez
@@ -622,7 +695,7 @@ add_action( 'wp_head', function () {
  * anular ese boxeado (ver body.cdlr-full-bleed en header.css/membresia.css).
  */
 add_filter( 'body_class', function ( $classes ) {
-	if ( is_page( 'membresia' ) || is_page( 'la-grua-del-rock' ) || is_page( 'quienes-somos' ) || is_page( 'practicas' ) || is_home() || is_single() ) {
+	if ( is_page( 'membresia' ) || is_page( 'la-grua-del-rock' ) || is_page( 'quienes-somos' ) || is_page( 'practicas' ) || is_page( 'alianzas' ) || is_home() || is_single() ) {
 		$classes[] = 'cdlr-full-bleed';
 	}
 	return $classes;
@@ -764,10 +837,10 @@ function cdlr_handle_contact_form() {
 	$body = implode( "\n", $lines );
 
 	$sent = wp_mail(
-		'corporaciondelaraiz@gmail.com',
+		'contacto@corporaciondelaraiz.cl',
 		$subject,
 		$body,
-		[ 'Content-Type: text/plain; charset=UTF-8', sprintf( 'Reply-To: %s <%s>', $name, $email ) ]
+		[ 'Content-Type: text/plain; charset=UTF-8', 'Cc: corporaciondelaraiz@gmail.com', sprintf( 'Reply-To: %s <%s>', $name, $email ) ]
 	);
 
 	if ( ! $sent ) {

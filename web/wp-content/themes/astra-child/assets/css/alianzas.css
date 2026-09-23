@@ -1,0 +1,78 @@
+/*
+ * Página Alianzas ("Trabajemos juntos") — reutiliza el hero sin foto de
+ * membresia.css (.cdlr-mem-hero), la franja de cifras y el CTA de
+ * premium.css (.cdlr-stats, .cdlr-cta). Acá solo lo específico: las 2
+ * tarjetas de "por qué colaborar" y la franja de logos de aliados (oculta
+ * mientras cdlr_alianzas_logos() esté vacío, ver functions.php).
+ */
+
+.cdlr-alianzas-porque {
+	background: #fff;
+	color: var(--cdlr-text);
+	padding-block: clamp(4rem, 8vw, 6rem);
+}
+.cdlr-alianzas-porque__grid {
+	display: grid;
+	gap: 2rem;
+}
+@media (min-width: 56rem) {
+	.cdlr-alianzas-porque__grid {
+		grid-template-columns: repeat(2, 1fr);
+	}
+}
+.cdlr-alianzas-porque__card {
+	background: var(--cdlr-ink);
+	border: 1px solid var(--cdlr-accent);
+	border-radius: var(--radius);
+	padding: 2rem;
+	color: #fff;
+}
+.cdlr-alianzas-porque__card .cdlr-section-title {
+	color: #fff;
+	text-align: left;
+	margin: 0.5rem 0 0.75rem;
+}
+.cdlr-alianzas-porque__card p {
+	font-family: var(--font-body);
+	font-size: 0.95rem;
+	line-height: 1.7;
+	color: var(--cdlr-body-dark);
+	margin: 0;
+}
+
+/* Franja de logos de aliados */
+.cdlr-alianzas-logos {
+	background: #fff;
+	color: var(--cdlr-text);
+	padding-bottom: clamp(4rem, 8vw, 6rem);
+	text-align: center;
+}
+.cdlr-alianzas-logos__grid {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: stretch;
+	justify-content: center;
+	gap: 1.25rem;
+	margin-top: 2.5rem;
+}
+/* Tarjeta blanca detrás de cada logo: varios vienen con fondo sólido propio
+ * (ej. Crápula, Ríos, Strato traen fondo negro) — sin esta tarjeta se verían
+ * como recortes desparejos junto a los que sí tienen fondo transparente. */
+.cdlr-alianzas-logos__item {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 9.5rem;
+	height: 6rem;
+	padding: 0.75rem;
+	background: #fff;
+	border: 1px solid var(--cdlr-line);
+	border-radius: var(--radius);
+}
+.cdlr-alianzas-logos__img {
+	max-height: 100%;
+	max-width: 100%;
+	width: auto;
+	height: auto;
+	object-fit: contain;
+}

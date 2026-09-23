@@ -43,6 +43,15 @@
 	margin: -1.5rem auto clamp(2.5rem, 5vw, 3.5rem);
 	text-align: center;
 }
+.cdlr-plans__custom {
+	text-align: center;
+	margin-top: clamp(2rem, 4vw, 3rem);
+	font-family: var(--font-body);
+	color: var(--cdlr-muted);
+}
+.cdlr-plans__custom .cdlr-btn--link {
+	margin-left: .35rem;
+}
 .cdlr-plans__grid {
 	display: grid;
 	gap: 2rem;

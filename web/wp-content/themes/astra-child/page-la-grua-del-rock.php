@@ -55,6 +55,14 @@ $hero_image = wp_get_attachment_image_url( 58, 'full' );
 		</div>
 	</section>
 
+	<section class="cdlr-grua-proxima" id="proxima-temporada">
+		<div class="cdlr-container" data-reveal>
+			<span class="cdlr-eyebrow">Segunda temporada</span>
+			<h2 class="cdlr-section-title">La Grúa vuelve a rodar el 3 de octubre de 2026</h2>
+			<p>Las bandas de esta nueva temporada ya están en selección — el line up completo se libera la segunda semana de septiembre.</p>
+		</div>
+	</section>
+
 	<section class="cdlr-grua-hitos" id="hitos">
 		<div class="cdlr-container">
 			<h2 class="cdlr-section-title" data-reveal>Primera temporada: 2025 – 2026</h2>
@@ -100,7 +108,7 @@ $hero_image = wp_get_attachment_image_url( 58, 'full' );
 			</div>
 			<div class="cdlr-cta__reasons" data-reveal>
 				<h2 class="cdlr-section-title">¿Eres una banda de Concepción?</h2>
-				<p>La convocatoria de esta temporada ya cerró, pero puedes escribirnos y te avisamos apenas abramos la próxima.</p>
+				<p>Las bandas de la temporada que arranca el 3 de octubre ya están en selección, pero puedes escribirnos y te avisamos apenas abramos la convocatoria siguiente.</p>
 				<a class="cdlr-btn cdlr-btn--ghost" href="<?php echo esc_url( home_url( '/#sumate' ) ); ?>">Escríbenos</a>
 			</div>
 		</div>

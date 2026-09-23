@@ -326,3 +326,53 @@ body:not(.home) {
 		transition: none;
 	}
 }
+
+/* El "subir arriba" nativo de Astra (#ast-scroll-top) desentonaba del resto
+ * del sitio (icono genérico de Astra, sin el sistema de diseño a medida) —
+ * se oculta acá en vez de tocar el Customizer, mismo criterio que el resto
+ * de las anulaciones a Astra en este archivo. Reemplazado por el botón
+ * flotante de WhatsApp de acá abajo, en el mismo lugar. 2026-08-25. */
+#ast-scroll-top {
+	display: none !important;
+}
+
+/* Botón flotante de WhatsApp — sitewide (cdlr_render_whatsapp_fab() en
+ * functions.php). Naranjo de marca (`--cdlr-accent`), no el verde clásico
+ * de WhatsApp — decisión explícita del usuario 2026-08-25, prioriza
+ * consistencia con el resto del sitio por sobre la convención de color de
+ * WhatsApp (el ícono ya deja claro qué hace el botón). */
+.cdlr-whatsapp-fab {
+	position: fixed;
+	right: 1.25rem;
+	bottom: 1.25rem;
+	z-index: 9000;
+	width: 3.5rem;
+	height: 3.5rem;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 50%;
+	background: var(--cdlr-accent);
+	color: #fff;
+	box-shadow: 0 10px 25px -8px rgba(0, 0, 0, 0.5);
+	transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.cdlr-whatsapp-fab:hover,
+.cdlr-whatsapp-fab:focus-visible {
+	background: var(--cdlr-accent-2);
+	transform: translateY(-3px);
+	box-shadow: 0 14px 30px -8px rgba(0, 0, 0, 0.6);
+	color: #fff;
+}
+.cdlr-whatsapp-fab .cdlr-icon {
+	width: 1.75rem;
+	height: 1.75rem;
+}
+@media (max-width: 30rem) {
+	.cdlr-whatsapp-fab {
+		right: 1rem;
+		bottom: 1rem;
+		width: 3.25rem;
+		height: 3.25rem;
+	}
+}

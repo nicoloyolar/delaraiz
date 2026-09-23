@@ -193,6 +193,12 @@ class CredencialModel {
   final DateTime? proximoCobro;
   final DateTime? actualizadoEn;
 
+  /// Fecha real en que la membresía quedó activa por primera vez — agregado
+  /// 2026-09-23 en la auditoría de pre-lanzamiento (antes no existía ningún
+  /// dato confiable de esto, ni acá ni en WordPress). La usa el beneficio de
+  /// "regalo de aniversario a los 12 meses" de Embajador.
+  final DateTime? activadoEn;
+
   /// Monto real mensual cuando `plan == NivelMembresia.personalizado` — el
   /// sitio PHP solo lo manda en ese caso (ver
   /// `cdlr_flow_sync_credencial_firestore()`). `null` para los 3 planes
@@ -207,6 +213,7 @@ class CredencialModel {
     this.estadoModeracion = EstadoModeracion.sinRevisar,
     this.proximoCobro,
     this.actualizadoEn,
+    this.activadoEn,
     this.montoPersonalizado,
   });
 
@@ -227,6 +234,7 @@ class CredencialModel {
       estadoModeracion: EstadoModeracion.fromString(data['estadoModeracion'] as String?),
       proximoCobro: (data['proximoCobro'] as Timestamp?)?.toDate(),
       actualizadoEn: (data['actualizadoEn'] as Timestamp?)?.toDate(),
+      activadoEn: (data['activadoEn'] as Timestamp?)?.toDate(),
       montoPersonalizado: (data['montoPersonalizado'] as num?)?.toInt(),
     );
   }

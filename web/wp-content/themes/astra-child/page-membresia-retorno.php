@@ -62,7 +62,7 @@ get_header();
 			<?php elseif ( 'error' === $status ) : ?>
 				<p class="cdlr-eyebrow">No encontramos tu postulación</p>
 				<h1 class="cdlr-mem-hero__title">Algo no <span>calzó</span></h1>
-				<p class="cdlr-hero__lead">Si veniste desde el pago de Flow y ves este mensaje, escríbenos a corporaciondelaraiz@gmail.com para revisarlo directamente.</p>
+				<p class="cdlr-hero__lead">Si veniste desde el pago de Flow y ves este mensaje, escríbenos a contacto@corporaciondelaraiz.cl para revisarlo directamente.</p>
 				<div class="cdlr-hero__actions">
 					<a class="cdlr-btn cdlr-btn--primary" href="<?php echo esc_url( home_url( '/membresia/#planes' ) ); ?>">Volver a Membresía</a>
 				</div>

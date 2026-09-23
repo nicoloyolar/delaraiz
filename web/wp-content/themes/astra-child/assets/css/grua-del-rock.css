@@ -64,6 +64,30 @@
 	border-radius: var(--radius);
 }
 
+/* Anuncio de la próxima temporada — banner de acento, para que destaque
+ * como noticia y no se lea como un hito más del timeline de la 1ª temporada
+ * (que sigue abajo, sin tocar, como registro histórico). */
+.cdlr-grua-proxima {
+	background: var(--cdlr-accent);
+	color: #fff;
+	padding-block: clamp(2.5rem, 5vw, 3.5rem);
+	text-align: center;
+}
+.cdlr-grua-proxima .cdlr-eyebrow {
+	color: rgba(255, 255, 255, 0.85);
+}
+.cdlr-grua-proxima .cdlr-section-title {
+	color: #fff;
+	margin: 0.4rem 0 0.75rem;
+}
+.cdlr-grua-proxima p {
+	font-family: var(--font-body);
+	font-size: 1.05rem;
+	max-width: 40rem;
+	margin-inline: auto;
+	color: rgba(255, 255, 255, 0.92);
+}
+
 /* Hitos / timeline (orden cronológico real) */
 .cdlr-grua-hitos {
 	background: var(--cdlr-ink);

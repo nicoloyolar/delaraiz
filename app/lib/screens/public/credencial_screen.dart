@@ -330,6 +330,13 @@ class _TarjetaCredencial extends ConsumerWidget {
                           style: TextStyle(color: context.colors.textSecondary),
                         ),
                       ],
+                      if (credencial.activadoEn != null) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          'Socio desde: ${formatoFecha.format(credencial.activadoEn!)}',
+                          style: TextStyle(color: context.colors.textMuted, fontSize: 12),
+                        ),
+                      ],
                     ],
                   ),
                 ),

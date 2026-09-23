@@ -218,6 +218,11 @@ class _FilaSocio extends StatelessWidget {
                         'Próximo cobro: ${DateFormat('dd/MM/yyyy').format(socio.proximoCobro!)}',
                         style: TextStyle(color: context.colors.textMuted, fontSize: 12),
                       ),
+                    if (socio.activadoEn != null)
+                      Text(
+                        'Socio desde: ${DateFormat('dd/MM/yyyy').format(socio.activadoEn!)}',
+                        style: TextStyle(color: context.colors.textMuted, fontSize: 12),
+                      ),
                   ],
                 ),
               ],
