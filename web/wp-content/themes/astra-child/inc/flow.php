@@ -701,13 +701,20 @@ function cdlr_flow_send_confirmation_emails( $socio_id ) {
 		[ 'Content-Type: text/plain; charset=UTF-8', 'Cc: corporaciondelaraiz@gmail.com' ]
 	);
 
+	// Se agrega el aviso de la credencial digital acá abajo — encontrado en
+	// la auditoría de "Credencial del Suscriptor" (2026-09-23): antes este
+	// correo no mencionaba para nada que existe /credencial ni cómo entrar
+	// (con el mismo correo, creando una cuenta nueva ahí — es una cuenta
+	// aparte, no la de WordPress/Flow). Sin este aviso, la única forma de
+	// que alguien supiera que existe era por su cuenta.
 	wp_mail(
 		$email,
 		'¡Tu membresía está activa! – Corporación de la Raíz',
 		sprintf(
-			"¡Hola %s!\n\nTu membresía %s ya está activa. El cobro es automático cada mes a la tarjeta que registraste, a través de Flow.\n\nSi necesitas cancelar o cambiar de plan, escríbenos a contacto@corporaciondelaraiz.cl.\n\nGracias por sumarte,\nCorporación de la Raíz",
+			"¡Hola %s!\n\nTu membresía %s ya está activa. El cobro es automático cada mes a la tarjeta que registraste, a través de Flow.\n\nPuedes ver tu credencial digital (tu plan, tus beneficios y el estado de tu membresía en vivo) en:\nhttps://delaraiz-app.web.app/credencial\n\nLa primera vez, crea una cuenta ahí con este mismo correo (%s) — es una cuenta aparte, no necesitas ninguna contraseña que hayas usado antes.\n\nSi necesitas cancelar o cambiar de plan, escríbenos a contacto@corporaciondelaraiz.cl.\n\nGracias por sumarte,\nCorporación de la Raíz",
 			$name,
-			$plan_label
+			$plan_label,
+			$email
 		),
 		[ 'Content-Type: text/plain; charset=UTF-8' ]
 	);

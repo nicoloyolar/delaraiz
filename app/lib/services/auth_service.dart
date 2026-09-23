@@ -44,6 +44,15 @@ class AuthService {
 
   Future<void> signOut() => _auth.signOut();
 
+  /// Recuperar acceso a la credencial cuando se olvida la contraseña —
+  /// agregado 2026-09-23 (auditoría de "Credencial del Suscriptor": antes no
+  /// existía ningún camino para esto, ni acá ni en la pantalla de login).
+  /// Firebase manda el correo de reseteo real; no hace falta nada del lado
+  /// PHP para esto.
+  Future<void> enviarCorreoRecuperacion(String email) {
+    return _auth.sendPasswordResetEmail(email: email);
+  }
+
   /// Traduce los códigos de error de Firebase Auth a mensajes legibles.
   /// Cubre tanto códigos de inicio de sesión (dashboard admin) como de
   /// registro (credencial de socio).

@@ -58,12 +58,40 @@ class _FormularioAccesoState extends ConsumerState<_FormularioAcceso> {
   bool _esRegistro = false;
   bool _cargando = false;
   String? _error;
+  String? _mensajeRecuperacion;
 
   @override
   void dispose() {
     _emailCtrl.dispose();
     _passwordCtrl.dispose();
     super.dispose();
+  }
+
+  /// Recuperar contraseña — agregado 2026-09-23 (antes no existía ningún
+  /// camino para esto). Usa el mismo campo de email ya escrito, para no
+  /// pedir el dato dos veces.
+  Future<void> _recuperarContrasena() async {
+    final email = _emailCtrl.text.trim();
+    if (email.isEmpty) {
+      setState(() => _error = 'Escribe tu correo arriba primero, para saber a dónde mandar el link.');
+      return;
+    }
+    setState(() {
+      _cargando = true;
+      _error = null;
+      _mensajeRecuperacion = null;
+    });
+    try {
+      await ref.read(authServiceProvider).enviarCorreoRecuperacion(email);
+      if (mounted) {
+        setState(() => _mensajeRecuperacion =
+            'Si existe una cuenta con ese correo, te mandamos un link para cambiar tu contraseña — revisa spam también.');
+      }
+    } on FirebaseAuthException catch (e) {
+      if (mounted) setState(() => _error = ref.read(authServiceProvider).mensajeError(e));
+    } finally {
+      if (mounted) setState(() => _cargando = false);
+    }
   }
 
   Future<void> _enviar() async {
@@ -137,6 +165,17 @@ class _FormularioAccesoState extends ConsumerState<_FormularioAcceso> {
                   ),
                   const SizedBox(height: 16),
                 ],
+                if (_mensajeRecuperacion != null) ...[
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppColors.seleccionadaSoft,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Text(_mensajeRecuperacion!, textAlign: TextAlign.center),
+                  ),
+                  const SizedBox(height: 16),
+                ],
                 TextFormField(
                   controller: _emailCtrl,
                   keyboardType: TextInputType.emailAddress,
@@ -169,6 +208,7 @@ class _FormularioAccesoState extends ConsumerState<_FormularioAcceso> {
                       : () => setState(() {
                             _esRegistro = !_esRegistro;
                             _error = null;
+                            _mensajeRecuperacion = null;
                           }),
                   child: Text(
                     _esRegistro
@@ -176,6 +216,11 @@ class _FormularioAccesoState extends ConsumerState<_FormularioAcceso> {
                         : '¿Primera vez? Crea tu cuenta',
                   ),
                 ),
+                if (!_esRegistro)
+                  TextButton(
+                    onPressed: _cargando ? null : _recuperarContrasena,
+                    child: const Text('¿Olvidaste tu contraseña?'),
+                  ),
               ],
             ),
           ),
@@ -351,19 +396,32 @@ class _TarjetaCredencial extends ConsumerWidget {
                     children: [
                       Text('Tus beneficios', style: Theme.of(context).textTheme.titleMedium),
                       const SizedBox(height: 12),
-                      ...credencial.plan.beneficios.map(
-                        (beneficio) => Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 4),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Icon(Icons.check_circle, size: 18, color: AppColors.seleccionada),
-                              const SizedBox(width: 8),
-                              Expanded(child: Text(beneficio)),
-                            ],
+                      // Encontrado en la auditoría de "Credencial del
+                      // Suscriptor" (2026-09-23): antes esta lista se
+                      // mostraba igual de completa aunque el estado fuera
+                      // "cancelado"/"rechazado" — solo el Pill de arriba
+                      // cambiaba de color, nada acá avisaba que ya no
+                      // aplican.
+                      if (credencial.estado != EstadoCredencial.activo)
+                        Text(
+                          'Tus beneficios no están disponibles mientras la membresía '
+                          'no esté activa.',
+                          style: TextStyle(color: context.colors.textMuted, fontStyle: FontStyle.italic),
+                        )
+                      else
+                        ...credencial.plan.beneficios.map(
+                          (beneficio) => Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 4),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Icon(Icons.check_circle, size: 18, color: AppColors.seleccionada),
+                                const SizedBox(width: 8),
+                                Expanded(child: Text(beneficio)),
+                              ],
+                            ),
                           ),
                         ),
-                      ),
                     ],
                   ),
                 ),

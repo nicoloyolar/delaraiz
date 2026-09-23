@@ -151,9 +151,21 @@ service cloud.firestore {
       // "vigente" — no se valida acá que no tenga ya uno vigente (la app ya
       // lo bloquea del lado cliente); una carrera exacta entre 2 clics es un
       // caso extremo aceptable, no justifica una Cloud Function aparte.
+      //
+      // 🔴 Encontrado en la auditoría de "Credencial del Suscriptor"
+      // (2026-09-23): esta regla nunca revisaba que la membresía siguiera
+      // realmente activa — un Embajador cancelado o moroso podía seguir
+      // generando cupones de acceso válidos, solo la UI lo escondía (y la UI
+      // no es una barrera real, cualquiera podría escribir a Firestore
+      // directo). Se agrega acá la verificación real: el documento
+      // `credenciales/{email}` (mismo email del cupón) tiene que existir,
+      // decir `estado == 'activo'` y `plan == 'embajador'`.
       allow create: if request.auth != null
         && request.auth.token.email.lower() == request.resource.data.socioEmail
-        && request.resource.data.estado == 'vigente';
+        && request.resource.data.estado == 'vigente'
+        && exists(/databases/$(database)/documents/credenciales/$(request.resource.data.socioEmail))
+        && get(/databases/$(database)/documents/credenciales/$(request.resource.data.socioEmail)).data.estado == 'activo'
+        && get(/databases/$(database)/documents/credenciales/$(request.resource.data.socioEmail)).data.plan == 'embajador';
 
       allow update, delete: if false;
     }

@@ -22,7 +22,13 @@ class CuponAccesoSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    if (credencial.plan != NivelMembresia.embajador) {
+    // El check real de seguridad vive en `firestore.rules` (la regla de
+    // `create` de `cupones_acceso` exige `estado == 'activo'`) — esto de acá
+    // es solo para no mostrarle a alguien cancelado/moroso un botón que de
+    // todas formas le va a fallar. Encontrado en la auditoría de
+    // "Credencial del Suscriptor", 2026-09-23: antes solo se revisaba el
+    // plan, nunca el estado.
+    if (credencial.plan != NivelMembresia.embajador || credencial.estado != EstadoCredencial.activo) {
       return const SizedBox.shrink();
     }
     final localesAsync = ref.watch(localesActivosProvider);
