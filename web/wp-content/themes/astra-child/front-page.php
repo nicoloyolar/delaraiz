@@ -17,9 +17,9 @@ $status     = isset( $_GET['cdlr_status'] ) ? sanitize_key( wp_unslash( $_GET['c
 			<h1 class="cdlr-hero__title">Transformamos las calles en <span>escenarios</span></h1>
 			<p class="cdlr-hero__lead">Corporación cultural sin fines de lucro que da visibilidad a las bandas emergentes de Concepción a través de festivales, producción audiovisual y proyectos propios como La Grúa del Rock, nuestro escenario móvil insignia.</p>
 			<div class="cdlr-hero__actions">
-				<a class="cdlr-btn cdlr-btn--primary" href="<?php echo esc_url( home_url( '/membresia/' ) ); ?>">Hazte socio/a</a>
+				<a class="cdlr-btn cdlr-btn--primary" href="<?php echo esc_url( home_url( '/membresia/' ) ); ?>">Membresía</a>
 				<a class="cdlr-btn cdlr-btn--ghost" href="#sumate">Haz tu aporte</a>
-				<a class="cdlr-btn cdlr-btn--link" href="#proyectos">Conoce nuestros proyectos <?php echo cdlr_icon( 'arrow-right' ); ?></a>
+				<a class="cdlr-btn cdlr-btn--link" href="<?php echo esc_url( home_url( '/proyectos/' ) ); ?>">Conoce nuestros proyectos <?php echo cdlr_icon( 'arrow-right' ); ?></a>
 			</div>
 		</div>
 	</section>
@@ -72,6 +72,9 @@ $status     = isset( $_GET['cdlr_status'] ) ? sanitize_key( wp_unslash( $_GET['c
 				</article>
 
 			</div>
+			<p style="text-align:center; margin-top: 2rem;">
+				<a class="cdlr-btn cdlr-btn--link" href="<?php echo esc_url( home_url( '/proyectos/' ) ); ?>">Ver todos los proyectos <?php echo cdlr_icon( 'arrow-right' ); ?></a>
+			</p>
 		</div>
 	</section>
 

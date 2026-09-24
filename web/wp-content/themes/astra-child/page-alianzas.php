@@ -19,7 +19,7 @@ $logos = cdlr_alianzas_logos();
 
 	<section class="cdlr-mem-hero">
 		<div class="cdlr-container" data-reveal>
-			<p class="cdlr-eyebrow">Corporación de la Raíz</p>
+			<p class="cdlr-eyebrow">Patrocinios</p>
 			<h1 class="cdlr-mem-hero__title">Trabajemos <span>juntos</span></h1>
 			<p class="cdlr-hero__lead">Buscamos marcas que quieran ser parte de la escena musical emergente de Concepción — visibilidad real, en la calle, junto a un proyecto cultural con historia y números concretos.</p>
 		</div>

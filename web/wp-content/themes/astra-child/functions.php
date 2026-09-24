@@ -67,7 +67,7 @@ function cdlr_render_header() {
 					'depth'          => 1,
 				] );
 				?>
-				<a class="cdlr-btn cdlr-btn--primary cdlr-header__cta" href="<?php echo esc_url( home_url( '/membresia/' ) ); ?>">Hazte socio/a</a>
+				<a class="cdlr-btn cdlr-btn--primary cdlr-header__cta" href="<?php echo esc_url( home_url( '/membresia/' ) ); ?>">Membresía</a>
 			</nav>
 
 			<button type="button" class="cdlr-header__toggle" id="cdlr-header-toggle" aria-expanded="false" aria-controls="cdlr-mobile-panel">
@@ -86,37 +86,58 @@ function cdlr_render_header() {
 				'depth'          => 1,
 			] );
 			?>
-			<a class="cdlr-btn cdlr-btn--primary" href="<?php echo esc_url( home_url( '/membresia/' ) ); ?>">Hazte socio/a</a>
+			<a class="cdlr-btn cdlr-btn--primary" href="<?php echo esc_url( home_url( '/membresia/' ) ); ?>">Membresía</a>
 		</div>
 	</header>
 	<?php
 }
 
 /**
- * Si todavía no se crea un menú en Apariencia > Menús, se listan las páginas
- * publicadas (mismo comportamiento por defecto que ya tenía Astra).
+ * Si todavía no se crea un menú en Apariencia > Menús, se dibuja este menú
+ * fijo en vez de listar automáticamente todas las páginas publicadas (que
+ * era el comportamiento original, heredado de Astra).
  *
- * `$cdlr_menu_excluded_slugs`: páginas que tienen que existir públicas para
- * que algo funcione (ej. la de retorno de pago de Flow, a la que Flow
- * redirige después de pagar) pero que nadie debería navegar directo desde el
- * menú — no se pueden poner en borrador/privadas porque necesitan seguir
- * siendo accesibles por URL para cualquier visitante, solo se ocultan de
- * esta lista automática.
+ * Cambiado a una lista explícita el 2026-09-24 (checklist de "Optimización
+ * de la Página Web", área TI): el nav definitivo pedido usa etiquetas
+ * distintas al título real de la página ("Súmate al equipo" en vez de
+ * "Prácticas profesionales", "Patrocinios" en vez de "Trabajemos juntos")
+ * y deja fuera del menú principal a "Inicio" (ya cubierto por el logo) y
+ * "La Grúa del Rock" (pasa a ser una de las 4 líneas dentro de "Proyectos",
+ * ya no un ítem de primer nivel). Auto-listar todo ya no alcanzaba para
+ * esto — con la lista fija, además, una página nueva que se cree a futuro
+ * NO aparece sola en el nav hasta que se agregue acá a propósito (más
+ * seguro que el comportamiento anterior, que la mostraba sin que nadie lo
+ * pidiera).
  */
 function cdlr_header_menu_fallback( $args ) {
-	$excluded_slugs = [ 'membresia-retorno' ];
+	$items = [
+		[ 'slug' => 'quienes-somos', 'label' => 'Quiénes somos' ],
+		[ 'slug' => 'noticias', 'label' => 'Noticias', 'es_pagina_de_entradas' => true ],
+		[ 'slug' => 'proyectos', 'label' => 'Proyectos' ],
+		[ 'slug' => 'practicas', 'label' => 'Súmate al equipo' ],
+		[ 'slug' => 'alianzas', 'label' => 'Patrocinios' ],
+	];
 
-	$pages = get_pages( [ 'sort_column' => 'menu_order', 'parent' => 0 ] );
 	echo '<ul class="' . esc_attr( $args['menu_class'] ) . '">';
-	foreach ( $pages as $page ) {
-		if ( in_array( $page->post_name, $excluded_slugs, true ) ) {
-			continue;
+	foreach ( $items as $item ) {
+		// "Noticias" es la página de entradas (home.php la sirve), no una
+		// Página normal — get_page_by_path() no la encuentra por su slug real
+		// una vez asignada como página de entradas, así que se resuelve con
+		// get_option( 'page_for_posts' ) en vez de buscarla por slug.
+		if ( ! empty( $item['es_pagina_de_entradas'] ) ) {
+			$page_id = (int) get_option( 'page_for_posts' );
+			$page    = $page_id ? get_post( $page_id ) : null;
+		} else {
+			$page = get_page_by_path( $item['slug'] );
+		}
+		if ( ! $page || 'publish' !== $page->post_status ) {
+			continue; // Todavía no existe/no está publicada — se omite en silencio, no rompe el nav.
 		}
 		printf(
 			'<li><a href="%1$s"%2$s>%3$s</a></li>',
 			esc_url( get_permalink( $page ) ),
-			is_page( $page->ID ) ? ' aria-current="page"' : '',
-			esc_html( get_the_title( $page ) )
+			is_page( $page->ID ) || ( ! empty( $item['es_pagina_de_entradas'] ) && is_home() ) ? ' aria-current="page"' : '',
+			esc_html( $item['label'] )
 		);
 	}
 	echo '</ul>';
@@ -187,10 +208,12 @@ function cdlr_render_footer() {
 				<h2 class="cdlr-footer__heading">Enlaces</h2>
 				<ul class="cdlr-footer__links">
 					<li><a href="<?php echo esc_url( home_url( '/' ) ); ?>">Inicio</a></li>
-					<li><a href="<?php echo esc_url( home_url( '/la-grua-del-rock/' ) ); ?>">La Grúa del Rock</a></li>
 					<li><a href="<?php echo esc_url( home_url( '/quienes-somos/' ) ); ?>">Quiénes somos</a></li>
+					<li><a href="<?php echo esc_url( home_url( '/noticias/' ) ); ?>">Noticias</a></li>
+					<li><a href="<?php echo esc_url( home_url( '/proyectos/' ) ); ?>">Proyectos</a></li>
+					<li><a href="<?php echo esc_url( home_url( '/practicas/' ) ); ?>">Súmate al equipo</a></li>
+					<li><a href="<?php echo esc_url( home_url( '/alianzas/' ) ); ?>">Patrocinios</a></li>
 					<li><a href="<?php echo esc_url( home_url( '/membresia/' ) ); ?>">Membresía</a></li>
-					<li><a href="<?php echo esc_url( home_url( '/practicas/' ) ); ?>">Prácticas profesionales</a></li>
 				</ul>
 			</div>
 
@@ -554,10 +577,11 @@ add_action( 'wp_enqueue_scripts', function () {
 	$is_quienes   = is_page( 'quienes-somos' );
 	$is_practicas = is_page( 'practicas' );
 	$is_alianzas  = is_page( 'alianzas' );
+	$is_proyectos = is_page( 'proyectos' );
 	$is_noticias  = is_home(); // La página de entradas (home.php) — is_home(), no is_page(), porque WP la trata como el índice del blog, no como una Página normal.
 	$is_single    = is_single(); // Una entrada individual (single.php).
 
-	if ( ! $is_home && ! $is_membresia && ! $is_grua && ! $is_quienes && ! $is_practicas && ! $is_alianzas && ! $is_noticias && ! $is_single ) {
+	if ( ! $is_home && ! $is_membresia && ! $is_grua && ! $is_quienes && ! $is_practicas && ! $is_alianzas && ! $is_proyectos && ! $is_noticias && ! $is_single ) {
 		return;
 	}
 
@@ -574,7 +598,7 @@ add_action( 'wp_enqueue_scripts', function () {
 	// membresia.css trae el hero sin foto (.cdlr-mem-hero) y las tarjetas de
 	// plan (.cdlr-plan*) que también reutilizan Quiénes somos, Prácticas y
 	// Alianzas (esta última solo el hero, no las tarjetas de plan).
-	if ( $is_membresia || $is_quienes || $is_practicas || $is_alianzas ) {
+	if ( $is_membresia || $is_quienes || $is_practicas || $is_alianzas || $is_proyectos ) {
 		$membresia_css_path = get_stylesheet_directory() . '/assets/css/membresia.css';
 		wp_enqueue_style( 'cdlr-membresia', get_stylesheet_directory_uri() . '/assets/css/membresia.css', [ 'cdlr-premium' ], file_exists( $membresia_css_path ) ? filemtime( $membresia_css_path ) : null );
 	}
@@ -648,15 +672,25 @@ add_action( 'wp_head', function () {
 		$image_id    = 399;
 		$url         = home_url( '/quienes-somos/' );
 	} elseif ( is_page( 'practicas' ) ) {
-		$title       = 'Prácticas profesionales — Corporación de la Raíz';
+		// Título/descripción actualizados 2026-09-24 (checklist de
+		// Optimización de la Página Web): el nav ahora le dice "Súmate al
+		// equipo" a esta misma página — el slug/contenido real no cambió.
+		$title       = 'Súmate al equipo — Corporación de la Raíz';
 		$description = 'Practica en sonido, producción audiovisual o apoyo general a la gestión de la Corporación de la Raíz en Concepción.';
 		$image_id    = 400;
 		$url         = home_url( '/practicas/' );
 	} elseif ( is_page( 'alianzas' ) ) {
-		$title       = 'Trabajemos juntos — Corporación de la Raíz';
+		// Mismo caso que Prácticas: el nav ahora le dice "Patrocinios" a esta
+		// página (antes "Trabajemos juntos") — slug/contenido sin cambios.
+		$title       = 'Patrocinios — Corporación de la Raíz';
 		$description = 'Súmate como marca aliada a los proyectos de la Corporación de la Raíz en Concepción, incluyendo La Grúa del Rock.';
 		$image_id    = 398;
 		$url         = home_url( '/alianzas/' );
+	} elseif ( is_page( 'proyectos' ) ) {
+		$title       = 'Proyectos — Corporación de la Raíz';
+		$description = 'Las 4 líneas de trabajo de la Corporación: La Grúa del Rock, Sesiones De La Raíz, Patrocinio de Bandas Locales y Apoyo a Bandas Juveniles.';
+		$image_id    = 398;
+		$url         = home_url( '/proyectos/' );
 	} elseif ( is_home() ) {
 		$title       = 'Noticias — Corporación de la Raíz';
 		$description = 'Recaps de shows, novedades de nuestros proyectos y todo lo que va pasando en la escena musical de Concepción.';
@@ -695,7 +729,7 @@ add_action( 'wp_head', function () {
  * anular ese boxeado (ver body.cdlr-full-bleed en header.css/membresia.css).
  */
 add_filter( 'body_class', function ( $classes ) {
-	if ( is_page( 'membresia' ) || is_page( 'la-grua-del-rock' ) || is_page( 'quienes-somos' ) || is_page( 'practicas' ) || is_page( 'alianzas' ) || is_home() || is_single() ) {
+	if ( is_page( 'membresia' ) || is_page( 'la-grua-del-rock' ) || is_page( 'quienes-somos' ) || is_page( 'practicas' ) || is_page( 'alianzas' ) || is_page( 'proyectos' ) || is_home() || is_single() ) {
 		$classes[] = 'cdlr-full-bleed';
 	}
 	return $classes;
