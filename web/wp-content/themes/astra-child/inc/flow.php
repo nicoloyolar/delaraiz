@@ -803,6 +803,28 @@ function cdlr_flow_handle_webhook() {
 				[ 'Content-Type: text/plain; charset=UTF-8' ]
 			);
 		}
+
+		// Aviso interno — encontrado en la auditoría de "Medios de Pago"
+		// (2026-09-24): este correo solo le avisaba al propio socio, nadie de
+		// la Corporación se enteraba de un cobro fallido a menos que entrara
+		// a mirar el panel de Socios por su cuenta. Mismo patrón que el aviso
+		// de alta de socio (cdlr_flow_complete_signup_for_socio) — get_post_field(),
+		// no get_the_title(), por el mismo motivo del "Privado: " (ver
+		// cdlr_flow_send_confirmation_emails()).
+		wp_mail(
+			'contacto@corporaciondelaraiz.cl',
+			sprintf( '⚠️ Cobro mensual fallido – %s', get_post_field( 'post_title', $socio->ID ) ),
+			sprintf(
+				// El contador ya se incrementó un par de líneas más arriba —
+				// leerlo tal cual acá (sin sumarle 1 de nuevo) es el valor
+				// correcto de "cuántos cobros seguidos han fallado, incluido este".
+				"El cobro automático de este mes falló para:\n\nNombre: %s\nEmail: %s\nCobros fallidos seguidos: %d\n\nFlow va a reintentar automáticamente. Si sigue fallando varios meses seguidos, vale la pena contactar al socio directo.",
+				get_post_field( 'post_title', $socio->ID ),
+				$email,
+				(int) get_post_meta( $socio->ID, '_cdlr_failed_charges', true )
+			),
+			[ 'Content-Type: text/plain; charset=UTF-8', 'Cc: corporaciondelaraiz@gmail.com' ]
+		);
 	}
 
 	cdlr_flow_sync_credencial_firestore( $socio->ID );
